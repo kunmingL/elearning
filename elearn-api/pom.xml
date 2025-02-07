@@ -11,4 +11,12 @@
 
     <artifactId>elearn-api</artifactId>
 
+    <dependencies>
+        <dependency>
+            <groupId>com.changjiang</groupId>
+            <artifactId>gtw-base</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+
 </project>

@@ -12,6 +12,7 @@
     <artifactId>elearning</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>elearning</name>
+    <packaging>pom</packaging>
     <description>elearning</description>
     <url/>
     <licenses>
