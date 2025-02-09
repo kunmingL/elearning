@@ -12,8 +12,8 @@ public interface SpokenEnglish {
      * @param text
      * @return
      */
-    @ServiceConfig(registryId = "demo.api.test",
-            url = "/api/demo/test",
-            channel = {SrvChannel.PC, SrvChannel.MOBILE})
+    @ServiceConfig(registryId = "elearn", url = "/api/demo/test", channel = {SrvChannel.PC, SrvChannel.MOBILE})
     String spokenEnglish(String text);
+
+    String spokenEnglishNone(String text);
 }
