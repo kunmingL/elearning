@@ -5,7 +5,7 @@ import com.changjiang.grpc.annotation.GrpcService;
 
 import java.rmi.registry.Registry;
 
-@GrpcService
+@GrpcService("elearn")
 public class SpokenEnglishImpl implements SpokenEnglish {
 
     @Override
