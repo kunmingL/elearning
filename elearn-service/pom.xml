@@ -29,6 +29,14 @@
             <artifactId>gtw-rest-python</artifactId>
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.baomidou/mybatis-plus-boot-starter -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-boot-starter</artifactId>
+            <version>3.5.10</version>
+        </dependency>
+
     </dependencies>
 
 </project>

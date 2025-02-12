@@ -2,10 +2,7 @@ package com.changjiang.elearn.api.service;
 
 import com.changjiang.bff.annotation.ServiceConfig;
 import com.changjiang.bff.constants.SrvChannel;
-import com.changjiang.elearn.api.dto.CommonRespDataDto;
-import com.changjiang.elearn.api.dto.FileObject;
-import com.changjiang.elearn.api.dto.UserScheduleDto;
-import com.changjiang.elearn.api.dto.WordDto;
+import com.changjiang.elearn.api.dto.*;
 
 import java.util.List;
 
@@ -42,10 +39,10 @@ public interface SpokenEnglish {
     /**
      * 根据用户的id、学习计划id、学习的天数、单词索引，查询之前创建的学习计划
      * 逐个按照单词组进行返回
-     * @param userScheduleDto
+     * @param dailyWordsDto
      * @return
      */
-    WordDto startDailySchedule(UserScheduleDto userScheduleDto);
+    WordDto startDailySchedule(DailyWordsDto dailyWordsDto);
 
 
 

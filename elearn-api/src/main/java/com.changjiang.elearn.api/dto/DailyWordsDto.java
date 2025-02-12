@@ -1,6 +1,11 @@
 package com.changjiang.elearn.api.dto;
 
-public class DailyWordsDto {
+import lombok.Data;
+
+import java.io.Serializable;
+
+@Data
+public class DailyWordsDto implements Serializable {
     /**
      * 用户id
      */

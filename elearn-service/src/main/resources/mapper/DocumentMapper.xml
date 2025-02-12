@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.changjiang.elearn.infrastructure.mapper.DocumentMapper">
+    
+    <insert id="insert" parameterType="com.changjiang.elearn.domain.model.Document">
+        INSERT INTO t_document (
+            id, user_id, file_name, file_path, file_size,
+            word_count, status, create_time, update_time
+        ) VALUES (
+            #{id}, #{userId}, #{fileName}, #{filePath}, #{fileSize},
+            #{wordCount}, #{status}, #{createTime}, #{updateTime}
+        )
+    </insert>
+
+    <select id="selectById" resultType="com.changjiang.elearn.domain.model.Document">
+        SELECT * FROM t_document WHERE id = #{id}
+    </select>
+
+    <update id="update" parameterType="com.changjiang.elearn.domain.model.Document">
+        UPDATE t_document
+        SET word_count = #{wordCount},
+            status = #{status},
+            update_time = #{updateTime}
+        WHERE id = #{id}
+    </update>
+</mapper> 
