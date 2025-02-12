@@ -8,7 +8,8 @@ import org.springframework.context.annotation.ComponentScan;
 @org.springframework.boot.autoconfigure.SpringBootApplication
 @ComponentScan(basePackages = {
         "com.changjiang.elearn",
-        "com.changjiang.grpc"
+        "com.changjiang.grpc",
+        "com.changjiang.python"
 })
 @EnableGrpcService
 public class SpringBootApplication {
