@@ -1,0 +1,45 @@
+@startuml
+left to right direction
+actor 学习者
+actor 系统管理员
+
+rectangle 英语学习助手 {
+  usecase "单词本管理" as UC1
+  usecase "文件上传" as UC1_1
+  usecase "选择提取模板" as UC1_2
+  usecase "设置学习计划" as UC1_3
+  
+  usecase "单词听写" as UC2
+  usecase "播放单词/例句" as UC2_1
+  usecase "输入答案" as UC2_2
+  usecase "查看报告" as UC2_3
+  
+  usecase "口语练习" as UC3
+  usecase "选择场景" as UC3_1
+  usecase "AI对话" as UC3_2
+  usecase "查看对话历史" as UC3_3
+  
+  usecase "系统管理" as UC4
+  usecase "用户管理" as UC4_1
+  usecase "数据备份" as UC4_2
+}
+
+学习者 --> UC1
+UC1 ..> UC1_1 : include
+UC1 ..> UC1_2 : include
+UC1 ..> UC1_3 : include
+
+学习者 --> UC2
+UC2 ..> UC2_1 : include
+UC2 ..> UC2_2 : include
+UC2 ..> UC2_3 : include
+
+学习者 --> UC3
+UC3 ..> UC3_1 : include
+UC3 ..> UC3_2 : include
+UC3 ..> UC3_3 : include
+
+系统管理员 --> UC4
+UC4 ..> UC4_1 : include
+UC4 ..> UC4_2 : include
+@enduml
