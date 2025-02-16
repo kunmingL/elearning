@@ -14,6 +14,7 @@ import com.changjiang.elearn.domain.repository.WordRepository;
 import com.changjiang.elearn.infrastructure.exception.BusinessException;
 import com.changjiang.elearn.infrastructure.service.AsyncDocumentService;
 import com.changjiang.elearn.infrastructure.service.FileStorageService;
+import com.changjiang.elearn.utils.ElearnPythonRestClient;
 import com.changjiang.grpc.annotation.GrpcService;
 import com.changjiang.python.PythonRestClient;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StringUtils;
 
+import java.io.FileOutputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -39,7 +41,7 @@ public class SpokenEnglishImpl implements SpokenEnglish {
     );
 
     @Autowired
-    private PythonRestClient pythonRestClient;
+    private ElearnPythonRestClient pythonRestClient;
     
     @Autowired
     private DocumentRepository documentRepository;
@@ -84,12 +86,15 @@ public class SpokenEnglishImpl implements SpokenEnglish {
         }
 
         try {
-            JSONObject jsonObject = JSONObject.parseObject(text);
-            byte[] audioBytes = pythonRestClient.callPythonServiceForBytes(speechApiUrl, jsonObject);
-            
-            FileObject fileObject = new FileObject();
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("prompt_template", text);
+            FileObject fileObject = pythonRestClient.fileObjCallPythonService(speechApiUrl, jsonObject, FileObject.class);
             fileObject.setFileName(UUID.randomUUID().toString() + ".mp3");
-            fileObject.setFileContent(audioBytes);
+            // 播放音频或保存为文件
+// 例如：保存为MP3文件
+            try (FileOutputStream fos = new FileOutputStream("output.mp3")) {
+                fos.write(fileObject.getFileContent());
+            }
             
             log.info("英语口语练习结束：出参:{}", fileObject.getFileName());
             return fileObject;
@@ -129,9 +134,12 @@ public class SpokenEnglishImpl implements SpokenEnglish {
                 documentRepository.save(document);
                 
                 // 调用Python服务提取单词
+                //需要给python提供文件信息及对应的指令
                 JSONObject extractRequest = new JSONObject();
                 extractRequest.put("filePath", filePath);
                 extractRequest.put("documentId", document.getId());
+                String command = "请你分析提取该文件中的单词数量";
+                extractRequest.put("command", command);
                 JSONObject result = pythonRestClient.callPythonService(
                     wordExtractApiUrl,
                     extractRequest,
