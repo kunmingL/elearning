@@ -12,11 +12,11 @@ import java.util.List;
 public interface SpokenEnglish {
     /**
      * 英语智能对话
-     * @param text
+     * @param  conversationDto
      * @return
      */
     @ServiceConfig(registryId = "elearn", url = "/elearn/spokenEnglish", channel = {SrvChannel.PC, SrvChannel.MOBILE})
-    FileObject spokenEnglish(String text);
+    FileObject spokenEnglish(ConversationDto conversationDto);
 
 
     /**
