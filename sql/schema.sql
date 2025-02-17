@@ -72,4 +72,27 @@ CREATE TABLE `t_daily_study` (
   PRIMARY KEY (`id`),
   KEY `idx_plan_id` (`plan_id`),
   KEY `idx_user_id` (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='每日学习记录表'; 
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='每日学习记录表';
+
+-- 对话表
+CREATE TABLE `t_conversation` (
+  `id` varchar(32) NOT NULL COMMENT '对话ID',
+  `user_id` varchar(32) NOT NULL COMMENT '用户ID',
+  `title` varchar(100) NOT NULL COMMENT '对话标题',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='对话表';
+
+-- 对话历史记录表
+CREATE TABLE `t_conversation_history` (
+  `id` varchar(32) NOT NULL COMMENT '历史记录ID',
+  `conversation_id` varchar(32) NOT NULL COMMENT '对话ID',
+  `role` varchar(20) NOT NULL COMMENT '角色:user-用户,assistant-AI助手',
+  `content` text NOT NULL COMMENT '内容',
+  `sequence` int NOT NULL COMMENT '顺序号',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_conversation_id` (`conversation_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='对话历史记录表'; 

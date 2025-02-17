@@ -15,7 +15,7 @@ public class GlobalExceptionHandler {
         log.error("业务异常", e);
         CommonRespDataDto response = new CommonRespDataDto();
         response.setCode("1");
-        response.setMessage(e.getMessage());
+        response.setCodeMessage(e.getMessage());
         return response;
     }
 
@@ -24,7 +24,7 @@ public class GlobalExceptionHandler {
         log.error("系统异常", e);
         CommonRespDataDto response = new CommonRespDataDto();
         response.setCode("500");
-        response.setMessage("系统异常");
+        response.setCodeMessage("系统异常");
         return response;
     }
 } 

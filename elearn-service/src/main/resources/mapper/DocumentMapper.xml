@@ -2,6 +2,18 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.changjiang.elearn.infrastructure.mapper.DocumentMapper">
     
+    <resultMap id="BaseResultMap" type="com.changjiang.elearn.domain.model.Document">
+        <id column="id" property="id" />
+        <result column="user_id" property="userId" />
+        <result column="file_name" property="fileName" />
+        <result column="file_path" property="filePath" />
+        <result column="file_size" property="fileSize" />
+        <result column="word_count" property="wordCount" />
+        <result column="status" property="status" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+    </resultMap>
+    
     <insert id="insert" parameterType="com.changjiang.elearn.domain.model.Document">
         INSERT INTO t_document (
             id, user_id, file_name, file_path, file_size,
@@ -12,7 +24,7 @@
         )
     </insert>
 
-    <select id="selectById" resultType="com.changjiang.elearn.domain.model.Document">
+    <select id="selectById" resultMap="BaseResultMap">
         SELECT * FROM t_document WHERE id = #{id}
     </select>
 

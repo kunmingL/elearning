@@ -6,7 +6,7 @@ import org.apache.ibatis.annotations.Param;
 
 @Mapper
 public interface DocumentMapper {
-    void insert(Document document);
+    int insert(Document document);
     Document selectById(@Param("id") String id);
-    void update(Document document);
+    int update(Document document);
 } 
