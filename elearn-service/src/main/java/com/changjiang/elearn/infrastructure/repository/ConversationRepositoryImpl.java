@@ -2,7 +2,7 @@ package com.changjiang.elearn.infrastructure.repository;
 
 import com.changjiang.elearn.domain.model.Conversation;
 import com.changjiang.elearn.domain.repository.ConversationRepository;
-import com.changjiang.elearn.infrastructure.mapper.ConversationMapper;
+import com.changjiang.elearn.infrastructure.persistence.dao.ConversationMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 

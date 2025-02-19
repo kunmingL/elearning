@@ -2,7 +2,7 @@ package com.changjiang.elearn.infrastructure.repository;
 
 import com.changjiang.elearn.domain.model.Word;
 import com.changjiang.elearn.domain.repository.WordRepository;
-import com.changjiang.elearn.infrastructure.mapper.WordMapper;
+import com.changjiang.elearn.infrastructure.persistence.dao.WordMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 

@@ -2,7 +2,7 @@ package com.changjiang.elearn.infrastructure.repository;
 
 import com.changjiang.elearn.domain.model.StudyPlan;
 import com.changjiang.elearn.domain.repository.StudyPlanRepository;
-import com.changjiang.elearn.infrastructure.mapper.StudyPlanMapper;
+import com.changjiang.elearn.infrastructure.persistence.dao.StudyPlanMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 

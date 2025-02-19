@@ -1,4 +1,4 @@
-package com.changjiang.elearn.infrastructure.mapper;
+package com.changjiang.elearn.infrastructure.persistence.dao;
 
 import com.changjiang.elearn.domain.model.Document;
 import org.apache.ibatis.annotations.Mapper;
