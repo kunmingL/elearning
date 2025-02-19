@@ -6,7 +6,8 @@ import java.time.LocalDateTime;
 
 @Data
 public class Document {
-    private String id;
+    private String docId;
+    private String planId;
     private String userId;
     private String fileName;
     private String filePath;

@@ -193,13 +193,19 @@ public class SpokenEnglishImpl implements SpokenEnglish {
             validateFiles(fileObjects);
             
             int totalWords = 0;
+            //在此处由于还未生成用户的学习计划，所以需要先创建学习计划的数据，并且生成一条学习计划id占位，与document关联
+            //此处仅保存文件属性即可，待AI分析出这批文件所包含的单词总数，更新到学习计划中。并返回该数据。
+
+            //创建学习计划
+
+            //保存文件
             for(FileObject file : fileObjects) {
                 // 保存文件
                 String filePath = fileStorageService.saveFile(file);
                 
                 // 创建文档记录,状态为待处理
                 Document document = new Document();
-                document.setId(UUID.randomUUID().toString());
+                document.setUserId(UUID.randomUUID().toString());
                 document.setUserId(null); // 此时还未绑定用户
                 document.setFileName(file.getFileName());
                 document.setFilePath(filePath);
@@ -211,7 +217,7 @@ public class SpokenEnglishImpl implements SpokenEnglish {
                 //需要给python提供文件信息及对应的指令
                 JSONObject extractRequest = new JSONObject();
                 extractRequest.put("filePath", filePath);
-                extractRequest.put("documentId", document.getId());
+                extractRequest.put("documentId", document.getUserId());
                 String command = "请你分析提取该文件中的单词数量";
                 extractRequest.put("command", command);
                 JSONObject result = pythonRestClient.callPythonService(
@@ -275,7 +281,7 @@ public class SpokenEnglishImpl implements SpokenEnglish {
             request.put("dailyWords", userScheduleDto.getDailyWords());
             request.put("countWords", userScheduleDto.getCountWords());
             request.put("studyModel", userScheduleDto.getStudyModel());
-            request.put("documentIds", documents.stream().map(Document::getId).toList());
+            request.put("documentIds", documents.stream().map(Document::getUserId).toList());
             
             JSONObject result = pythonRestClient.callPythonService(
                 studyPlanApiUrl,
@@ -287,7 +293,7 @@ public class SpokenEnglishImpl implements SpokenEnglish {
             StudyPlan plan = new StudyPlan();
             plan.setId(UUID.randomUUID().toString());
             plan.setUserId(userScheduleDto.getUserId());
-            plan.setDocumentId(documents.get(0).getId()); // 如果有多个文档,可能需要调整
+            //plan.setDocumentId(documents.get(0).getPlanId()); // 如果有多个文档,可能需要调整
             plan.setDailyWords(userScheduleDto.getDailyWords());
             plan.setTotalDays(calculateTotalDays(userScheduleDto));
             plan.setCurrentDay(1);
