@@ -42,6 +42,24 @@
             <artifactId>mysql-connector-java</artifactId>
             <version>8.0.30</version> <!-- 根据需要调整版本 -->
         </dependency>
+
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <version>1.5.5.Final</version> <!-- 版本号根据实际情况选择 -->
+        </dependency>
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct-processor</artifactId>
+            <version>1.5.5.Final</version> <!-- 版本号根据实际情况选择 -->
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
 </project>

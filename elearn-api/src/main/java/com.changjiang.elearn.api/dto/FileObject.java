@@ -11,6 +11,11 @@ public class FileObject implements Serializable {
     private String fileName;
 
     /**
+     *文件路径
+     */
+    private String filePath;
+
+    /**
      *文件内容
      */
     private byte[] fileContent;

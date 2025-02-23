@@ -33,7 +33,7 @@ public interface SpokenEnglish {
      * 计划包含 每天学习个数、学习天数
      * @return
      */
-    CommonRespDataDto createUserSchedule(UserScheduleDto userScheduleDto);
+    CommonRespDataDto createUserSchedule(StudyPlanDTO studyPlanDTO);
 
 
     /**
@@ -42,7 +42,7 @@ public interface SpokenEnglish {
      * @param dailyWordsDto
      * @return
      */
-    WordDto startDailySchedule(DailyWordsDto dailyWordsDto);
+    WordDTO startDailySchedule(DailyStudyDTO dailyWordsDto);
 
 
 

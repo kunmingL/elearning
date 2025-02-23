@@ -1,34 +1,78 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.changjiang.elearn.infrastructure.persistence.dao.WordMapper">
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.changjiang.elearn.infrastructure.mapper.WordMapper">
     
-    <insert id="insert" parameterType="com.changjiang.elearn.domain.model.Word">
-        INSERT INTO t_word (
-            id, document_id, word, pronunciation, translation,
-            audio_path, create_time, update_time
-        ) VALUES (
-            #{id}, #{documentId}, #{word}, #{pronunciation}, #{translation},
-            #{audioPath}, #{createTime}, #{updateTime}
-        )
-    </insert>
-
-    <select id="selectById" resultType="com.changjiang.elearn.domain.model.Word">
-        SELECT * FROM t_word WHERE id = #{id}
+    <resultMap id="BaseResultMap" type="com.changjiang.elearn.infrastructure.persistence.po.WordPO">
+        <id column="word_id" property="wordId"/>
+        <result column="plan_id" property="planId"/>
+        <result column="daily_id" property="dailyId"/>
+        <result column="word_idx" property="wordIdx"/>
+        <result column="word" property="word"/>
+        <result column="pronunciation" property="pronunciation"/>
+        <result column="word_translation" property="wordTranslation"/>
+        <result column="sentence" property="sentence"/>
+        <result column="sentence_translation" property="sentenceTranslation"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+    
+    <sql id="Base_Column_List">
+        word_id, plan_id, daily_id, word_idx, word, pronunciation, word_translation, sentence, sentence_translation, create_time, update_time
+    </sql>
+    
+    <!-- 动态查询条件 -->
+    <sql id="Condition_Where_Clause">
+        <where>
+            <if test="condition.wordId != null and condition.wordId != ''">
+                AND word_id LIKE CONCAT('%', #{condition.wordId}, '%')
+            </if>
+            <if test="condition.planId != null and condition.planId != ''">
+                AND plan_id LIKE CONCAT('%', #{condition.planId}, '%')
+            </if>
+            <if test="condition.dailyId != null and condition.dailyId != ''">
+                AND daily_id LIKE CONCAT('%', #{condition.dailyId}, '%')
+            </if>
+            <if test="condition.wordIdx != null">
+                AND word_idx = #{condition.wordIdx}
+            </if>
+            <if test="condition.word != null and condition.word != ''">
+                AND word LIKE CONCAT('%', #{condition.word}, '%')
+            </if>
+            <if test="condition.pronunciation != null and condition.pronunciation != ''">
+                AND pronunciation LIKE CONCAT('%', #{condition.pronunciation}, '%')
+            </if>
+            <if test="condition.wordTranslation != null and condition.wordTranslation != ''">
+                AND word_translation LIKE CONCAT('%', #{condition.wordTranslation}, '%')
+            </if>
+            <if test="condition.sentence != null and condition.sentence != ''">
+                AND sentence LIKE CONCAT('%', #{condition.sentence}, '%')
+            </if>
+            <if test="condition.sentenceTranslation != null and condition.sentenceTranslation != ''">
+                AND sentence_translation LIKE CONCAT('%', #{condition.sentenceTranslation}, '%')
+            </if>
+            <if test="condition.createTime != null">
+                AND create_time = #{condition.createTime}
+            </if>
+            <if test="condition.updateTime != null">
+                AND update_time = #{condition.updateTime}
+            </if>
+        </where>
+    </sql>
+    
+    <!-- 条件查询 -->
+    <select id="selectByCondition" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_word
+        <include refid="Condition_Where_Clause"/>
     </select>
-
-    <select id="selectDailyWords" resultType="com.changjiang.elearn.domain.model.Word">
-        SELECT * FROM t_word 
-        WHERE document_id = #{documentId}
-        ORDER BY create_time
-        LIMIT #{offset}, #{limit}
+    
+    <!-- 分页条件查询 -->
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_word
+        <include refid="Condition_Where_Clause"/>
     </select>
-
-    <update id="update" parameterType="com.changjiang.elearn.domain.model.Word">
-        UPDATE t_word
-        SET pronunciation = #{pronunciation},
-            translation = #{translation},
-            audio_path = #{audioPath},
-            update_time = #{updateTime}
-        WHERE id = #{id}
-    </update>
+    
+    <!-- 基础的增删改查由 MyBatis-Plus 提供 -->
 </mapper> 

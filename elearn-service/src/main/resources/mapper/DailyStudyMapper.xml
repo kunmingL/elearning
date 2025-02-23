@@ -1,15 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
     "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.changjiang.elearn.infrastructure.mapper.DocumentMapper">
+<mapper namespace="com.changjiang.elearn.infrastructure.mapper.DailyStudyMapper">
     
-    <resultMap id="BaseResultMap" type="com.changjiang.elearn.infrastructure.persistence.po.DocumentPO">
-        <id column="doc_id" property="docId"/>
+    <resultMap id="BaseResultMap" type="com.changjiang.elearn.infrastructure.persistence.po.DailyStudyPO">
+        <id column="daily_id" property="dailyId"/>
         <result column="plan_id" property="planId"/>
         <result column="user_id" property="userId"/>
-        <result column="file_name" property="fileName"/>
-        <result column="file_path" property="filePath"/>
-        <result column="file_size" property="fileSize"/>
+        <result column="study_day" property="studyDay"/>
+        <result column="current_word_idx" property="currentWordIdx"/>
         <result column="word_count" property="wordCount"/>
         <result column="status" property="status"/>
         <result column="create_time" property="createTime"/>
@@ -17,14 +16,14 @@
     </resultMap>
     
     <sql id="Base_Column_List">
-        doc_id, plan_id, user_id, file_name, file_path, file_size, word_count, status, create_time, update_time
+        daily_id, plan_id, user_id, study_day, current_word_idx, word_count, status, create_time, update_time
     </sql>
     
     <!-- 动态查询条件 -->
     <sql id="Condition_Where_Clause">
         <where>
-            <if test="condition.docId != null and condition.docId != ''">
-                AND doc_id LIKE CONCAT('%', #{condition.docId}, '%')
+            <if test="condition.dailyId != null and condition.dailyId != ''">
+                AND daily_id LIKE CONCAT('%', #{condition.dailyId}, '%')
             </if>
             <if test="condition.planId != null and condition.planId != ''">
                 AND plan_id LIKE CONCAT('%', #{condition.planId}, '%')
@@ -32,14 +31,11 @@
             <if test="condition.userId != null and condition.userId != ''">
                 AND user_id LIKE CONCAT('%', #{condition.userId}, '%')
             </if>
-            <if test="condition.fileName != null and condition.fileName != ''">
-                AND file_name LIKE CONCAT('%', #{condition.fileName}, '%')
+            <if test="condition.studyDay != null">
+                AND study_day = #{condition.studyDay}
             </if>
-            <if test="condition.filePath != null and condition.filePath != ''">
-                AND file_path LIKE CONCAT('%', #{condition.filePath}, '%')
-            </if>
-            <if test="condition.fileSize != null">
-                AND file_size = #{condition.fileSize}
+            <if test="condition.currentWordIdx != null">
+                AND current_word_idx = #{condition.currentWordIdx}
             </if>
             <if test="condition.wordCount != null">
                 AND word_count = #{condition.wordCount}
@@ -59,14 +55,14 @@
     <!-- 条件查询 -->
     <select id="selectByCondition" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List"/>
-        FROM t_document
+        FROM t_daily_study
         <include refid="Condition_Where_Clause"/>
     </select>
     
     <!-- 分页条件查询 -->
     <select id="selectPage" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List"/>
-        FROM t_document
+        FROM t_daily_study
         <include refid="Condition_Where_Clause"/>
     </select>
     

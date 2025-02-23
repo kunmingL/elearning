@@ -1,10 +1,7 @@
-package com.changjiang.elearn.domain.model;
+package com.changjiang.elearn.api.dto;
 
-import lombok.Builder;
 import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
+import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.math.BigDecimal;
@@ -12,20 +9,22 @@ import java.math.BigDecimal;
 /**
  * 单词表
  */
-@Getter
-@NoArgsConstructor
-public class Word {
+@Data
+public class WordDTO {
     /**
      * 单词ID
      */
+    @Size(max = 32)
     private String wordId;
     /**
      * 学习计划ID
      */
+    @Size(max = 32)
     private String planId;
     /**
      * dailyID
      */
+    @Size(max = 32)
     private String dailyId;
     /**
      * 单词索引
@@ -34,22 +33,27 @@ public class Word {
     /**
      * 单词
      */
+    @Size(max = 100)
     private String word;
     /**
      * 音标
      */
+    @Size(max = 100)
     private String pronunciation;
     /**
      * 翻译
      */
+    @Size(max = 500)
     private String wordTranslation;
     /**
      * 例句
      */
+    @Size(max = 500)
     private String sentence;
     /**
      * 例句翻译
      */
+    @Size(max = 500)
     private String sentenceTranslation;
     /**
      * 创建时间
@@ -59,19 +63,4 @@ public class Word {
      * 更新时间
      */
     private LocalDateTime updateTime;
-
-    @Builder
-    public Word(String wordId, String planId, String dailyId, Integer wordIdx, String word, String pronunciation, String wordTranslation, String sentence, String sentenceTranslation, LocalDateTime createTime, LocalDateTime updateTime) {
-        this.wordId = wordId;
-        this.planId = planId;
-        this.dailyId = dailyId;
-        this.wordIdx = wordIdx;
-        this.word = word;
-        this.pronunciation = pronunciation;
-        this.wordTranslation = wordTranslation;
-        this.sentence = sentence;
-        this.sentenceTranslation = sentenceTranslation;
-        this.createTime = createTime;
-        this.updateTime = updateTime;
-    }
-}
+} 

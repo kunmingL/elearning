@@ -1,10 +1,7 @@
-package com.changjiang.elearn.domain.model;
+package com.changjiang.elearn.api.dto;
 
-import lombok.Builder;
 import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
+import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.math.BigDecimal;
@@ -12,28 +9,32 @@ import java.math.BigDecimal;
 /**
  * 文档表
  */
-@Getter
-@NoArgsConstructor
-public class Document {
+@Data
+public class DocumentDTO {
     /**
      * 文档ID
      */
+    @Size(max = 32)
     private String docId;
     /**
      * 学习计划ID
      */
+    @Size(max = 32)
     private String planId;
     /**
      * 用户ID
      */
+    @Size(max = 32)
     private String userId;
     /**
      * 文件名
      */
+    @Size(max = 200)
     private String fileName;
     /**
      * 文件路径
      */
+    @Size(max = 500)
     private String filePath;
     /**
      * 文件大小(字节)
@@ -55,22 +56,4 @@ public class Document {
      * 更新时间
      */
     private LocalDateTime updateTime;
-
-    @Builder
-    public Document(String docId, String planId, String userId, String fileName, String filePath, Long fileSize, Integer wordCount, Integer status, LocalDateTime createTime, LocalDateTime updateTime) {
-        this.docId = docId;
-        this.planId = planId;
-        this.userId = userId;
-        this.fileName = fileName;
-        this.filePath = filePath;
-        this.fileSize = fileSize;
-        this.wordCount = wordCount;
-        this.status = status;
-        this.createTime = createTime;
-        this.updateTime = updateTime;
-    }
-
-    public void changeStatus(Integer status) {
-        this.status = status;
-    }
-}
+} 

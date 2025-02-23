@@ -1,26 +1,70 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.changjiang.elearn.infrastructure.persistence.dao.StudyPlanMapper">
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.changjiang.elearn.infrastructure.mapper.StudyPlanMapper">
     
-    <insert id="insert" parameterType="com.changjiang.elearn.domain.model.StudyPlan">
-        INSERT INTO t_study_plan (
-            id, user_id, document_id, daily_words, total_days,
-            current_day, status, create_time, update_time
-        ) VALUES (
-            #{id}, #{userId}, #{documentId}, #{dailyWords}, #{totalDays},
-            #{currentDay}, #{status}, #{createTime}, #{updateTime}
-        )
-    </insert>
-
-    <select id="selectById" resultType="com.changjiang.elearn.domain.model.StudyPlan">
-        SELECT * FROM t_study_plan WHERE id = #{id}
+    <resultMap id="BaseResultMap" type="com.changjiang.elearn.infrastructure.persistence.po.StudyPlanPO">
+        <id column="plan_id" property="planId"/>
+        <result column="user_id" property="userId"/>
+        <result column="daily_words" property="dailyWords"/>
+        <result column="total_days" property="totalDays"/>
+        <result column="total_words" property="totalWords"/>
+        <result column="current_day" property="currentDay"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+    
+    <sql id="Base_Column_List">
+        plan_id, user_id, daily_words, total_days, total_words, current_day, status, create_time, update_time
+    </sql>
+    
+    <!-- 动态查询条件 -->
+    <sql id="Condition_Where_Clause">
+        <where>
+            <if test="condition.planId != null and condition.planId != ''">
+                AND plan_id LIKE CONCAT('%', #{condition.planId}, '%')
+            </if>
+            <if test="condition.userId != null and condition.userId != ''">
+                AND user_id LIKE CONCAT('%', #{condition.userId}, '%')
+            </if>
+            <if test="condition.dailyWords != null">
+                AND daily_words = #{condition.dailyWords}
+            </if>
+            <if test="condition.totalDays != null">
+                AND total_days = #{condition.totalDays}
+            </if>
+            <if test="condition.totalWords != null">
+                AND total_words = #{condition.totalWords}
+            </if>
+            <if test="condition.currentDay != null">
+                AND current_day = #{condition.currentDay}
+            </if>
+            <if test="condition.status != null">
+                AND status = #{condition.status}
+            </if>
+            <if test="condition.createTime != null">
+                AND create_time = #{condition.createTime}
+            </if>
+            <if test="condition.updateTime != null">
+                AND update_time = #{condition.updateTime}
+            </if>
+        </where>
+    </sql>
+    
+    <!-- 条件查询 -->
+    <select id="selectByCondition" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_study_plan
+        <include refid="Condition_Where_Clause"/>
     </select>
-
-    <update id="update" parameterType="com.changjiang.elearn.domain.model.StudyPlan">
-        UPDATE t_study_plan
-        SET current_day = #{currentDay},
-            status = #{status},
-            update_time = #{updateTime}
-        WHERE id = #{id}
-    </update>
+    
+    <!-- 分页条件查询 -->
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_study_plan
+        <include refid="Condition_Where_Clause"/>
+    </select>
+    
+    <!-- 基础的增删改查由 MyBatis-Plus 提供 -->
 </mapper> 

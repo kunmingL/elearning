@@ -10,17 +10,17 @@ import java.time.LocalDate;
 import java.math.BigDecimal;
 
 /**
- * 文档表
+ * 每日学习记录表
  */
 @Getter
 @NoArgsConstructor
-public class Document {
+public class DailyStudy {
     /**
-     * 文档ID
+     * dailyID
      */
-    private String docId;
+    private String dailyId;
     /**
-     * 学习计划ID
+     * 计划ID
      */
     private String planId;
     /**
@@ -28,23 +28,19 @@ public class Document {
      */
     private String userId;
     /**
-     * 文件名
+     * 学习天数
      */
-    private String fileName;
+    private Integer studyDay;
     /**
-     * 文件路径
+     * 当前单词索引
      */
-    private String filePath;
-    /**
-     * 文件大小(字节)
-     */
-    private Long fileSize;
+    private Integer currentWordIdx;
     /**
      * 单词数量
      */
     private Integer wordCount;
     /**
-     * 状态:0-待处理,1-处理中,2-处理完成
+     * 状态:0-未完成,1-已完成
      */
     private Integer status;
     /**
@@ -57,20 +53,23 @@ public class Document {
     private LocalDateTime updateTime;
 
     @Builder
-    public Document(String docId, String planId, String userId, String fileName, String filePath, Long fileSize, Integer wordCount, Integer status, LocalDateTime createTime, LocalDateTime updateTime) {
-        this.docId = docId;
+    public DailyStudy(String dailyId, String planId, String userId, Integer studyDay, Integer currentWordIdx, Integer wordCount, Integer status, LocalDateTime createTime, LocalDateTime updateTime) {
+        this.dailyId = dailyId;
         this.planId = planId;
         this.userId = userId;
-        this.fileName = fileName;
-        this.filePath = filePath;
-        this.fileSize = fileSize;
+        this.studyDay = studyDay;
+        this.currentWordIdx = currentWordIdx;
         this.wordCount = wordCount;
         this.status = status;
         this.createTime = createTime;
         this.updateTime = updateTime;
     }
 
-    public void changeStatus(Integer status) {
+    public void changeCurrentWordIdx(Integer currentWordIdx){
+        this.currentWordIdx = this.currentWordIdx;
+    }
+
+    public void changeStatus(Integer status){
         this.status = status;
     }
 }
