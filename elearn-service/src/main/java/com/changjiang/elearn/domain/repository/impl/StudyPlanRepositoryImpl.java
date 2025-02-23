@@ -1,4 +1,4 @@
-package com.changjiang.elearn.infrastructure.repository;
+package com.changjiang.elearn.domain.repository.impl;
 
 import com.changjiang.elearn.domain.model.StudyPlan;
 import com.changjiang.elearn.domain.repository.StudyPlanRepository;

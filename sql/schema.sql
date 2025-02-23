@@ -36,7 +36,6 @@ CREATE TABLE `t_document` (
 CREATE TABLE `t_study_plan` (
                                 `plan_id` varchar(32) NOT NULL COMMENT '学习计划ID',
                                 `user_id` varchar(32) NOT NULL COMMENT '用户ID',
-                                `document_id` varchar(32) NOT NULL COMMENT '文档ID',
                                 `daily_words` int NOT NULL COMMENT '每日单词数',
                                 `total_days` int NOT NULL COMMENT '总天数',
                                 `current_day` int NOT NULL DEFAULT '1' COMMENT '当前天数',
