@@ -1,12 +1,30 @@
 package com.changjiang.elearn.infrastructure.persistence.dao;
 
-import com.changjiang.elearn.domain.model.Document;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.changjiang.elearn.infrastructure.persistence.po.DocumentPO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import java.util.List;
 
+/**
+ * 文档表 数据访问接口
+ */
 @Mapper
-public interface DocumentMapper {
-    int insert(Document document);
-    Document selectById(@Param("id") String id);
-    int update(Document document);
+public interface DocumentMapper extends BaseMapper<DocumentPO> {
+    /**
+     * 根据条件查询列表
+     * @param condition 查询条件
+     * @return 实体列表
+     */
+    List<DocumentPO> selectByCondition(@Param("condition") DocumentPO condition);
+    
+    /**
+     * 根据条件分页查询
+     * @param page 分页参数
+     * @param condition 查询条件
+     * @return 分页结果
+     */
+    IPage<DocumentPO> selectPage(IPage<DocumentPO> page, @Param("condition") DocumentPO condition);
 } 
