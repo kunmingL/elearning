@@ -16,7 +16,7 @@ public interface SpokenEnglish {
      * @return
      */
     @ServiceConfig(registryId = "elearn", url = "/elearn/spokenEnglish", channel = {SrvChannel.PC, SrvChannel.MOBILE})
-    FileObject spokenEnglish(ConversationDto conversationDto);
+    FileObject spokenEnglish(ConversationInputDto conversationDto);
 
 
     /**

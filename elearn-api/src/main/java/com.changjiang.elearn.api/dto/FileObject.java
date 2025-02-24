@@ -15,6 +15,7 @@ public class FileObject implements Serializable {
      */
     private String filePath;
 
+
     /**
      *文件内容
      */

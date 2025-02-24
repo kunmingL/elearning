@@ -1,30 +1,53 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.changjiang.elearn.infrastructure.persistence.dao.ConversationMapper">
     
-    <resultMap id="BaseResultMap" type="com.changjiang.elearn.domain.model.Conversation">
-        <id column="id" property="id" />
-        <result column="user_id" property="userId" />
-        <result column="title" property="title" />
-        <result column="create_time" property="createTime" />
-        <result column="update_time" property="updateTime" />
+    <resultMap id="BaseResultMap" type="com.changjiang.elearn.infrastructure.persistence.po.ConversationPO">
+        <id column="conversation_id" property="conversationId"/>
+        <result column="user_id" property="userId"/>
+        <result column="title" property="title"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
     </resultMap>
     
-    <insert id="insert" parameterType="com.changjiang.elearn.domain.model.Conversation">
-        INSERT INTO t_conversation (
-            id, user_id, title, create_time, update_time
-        ) VALUES (
-            #{id}, #{userId}, #{title}, #{createTime}, #{updateTime}
-        )
-    </insert>
-
-    <select id="selectById" resultMap="BaseResultMap">
-        SELECT * FROM t_conversation WHERE id = #{id}
+    <sql id="Base_Column_List">
+        conversation_id, user_id, title, create_time, update_time
+    </sql>
+    
+    <!-- 动态查询条件 -->
+    <sql id="Condition_Where_Clause">
+        <where>
+            <if test="condition.conversationId != null and condition.conversationId != ''">
+                AND conversation_id LIKE CONCAT('%', #{condition.conversationId}, '%')
+            </if>
+            <if test="condition.userId != null and condition.userId != ''">
+                AND user_id LIKE CONCAT('%', #{condition.userId}, '%')
+            </if>
+            <if test="condition.title != null and condition.title != ''">
+                AND title LIKE CONCAT('%', #{condition.title}, '%')
+            </if>
+            <if test="condition.createTime != null">
+                AND create_time = #{condition.createTime}
+            </if>
+            <if test="condition.updateTime != null">
+                AND update_time = #{condition.updateTime}
+            </if>
+        </where>
+    </sql>
+    
+    <!-- 条件查询 -->
+    <select id="selectByCondition" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_conversation
+        <include refid="Condition_Where_Clause"/>
     </select>
-
-    <select id="selectByUserId" resultMap="BaseResultMap">
-        SELECT * FROM t_conversation 
-        WHERE user_id = #{userId}
-        ORDER BY create_time DESC
+    
+    <!-- 分页条件查询 -->
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_conversation
+        <include refid="Condition_Where_Clause"/>
     </select>
+    <!-- 基础的增删改查由 MyBatis-Plus 提供 -->
 </mapper> 

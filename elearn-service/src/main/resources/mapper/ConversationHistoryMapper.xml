@@ -1,33 +1,74 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.changjiang.elearn.infrastructure.persistence.dao.ConversationHistoryMapper">
     
-    <resultMap id="BaseResultMap" type="com.changjiang.elearn.domain.model.ConversationHistory">
-        <id column="id" property="id" />
-        <result column="conversation_id" property="conversationId" />
-        <result column="role" property="role" />
-        <result column="content" property="content" />
-        <result column="sequence" property="sequence" />
-        <result column="create_time" property="createTime" />
+    <resultMap id="BaseResultMap" type="com.changjiang.elearn.infrastructure.persistence.po.ConversationHistoryPO">
+        <id column="history_id" property="historyId"/>
+        <result column="conversation_id" property="conversationId"/>
+        <result column="role" property="role"/>
+        <result column="content" property="content"/>
+        <result column="sequence" property="sequence"/>
+        <result column="create_time" property="createTime"/>
     </resultMap>
     
-    <insert id="insert" parameterType="com.changjiang.elearn.domain.model.ConversationHistory">
-        INSERT INTO t_conversation_history (
-            id, conversation_id, role, content, sequence, create_time
-        ) VALUES (
-            #{id}, #{conversationId}, #{role}, #{content}, #{sequence}, #{createTime}
-        )
-    </insert>
-
-    <select id="selectByConversationId" resultMap="BaseResultMap">
-        SELECT * FROM t_conversation_history 
-        WHERE conversation_id = #{conversationId}
-        ORDER BY sequence ASC
+    <sql id="Base_Column_List">
+        history_id, conversation_id, role, content, sequence, create_time
+    </sql>
+    
+    <!-- 动态查询条件 -->
+    <sql id="Condition_Where_Clause">
+        <where>
+            <if test="condition.historyId != null and condition.historyId != ''">
+                AND history_id LIKE CONCAT('%', #{condition.historyId}, '%')
+            </if>
+            <if test="condition.conversationId != null and condition.conversationId != ''">
+                AND conversation_id LIKE CONCAT('%', #{condition.conversationId}, '%')
+            </if>
+            <if test="condition.role != null and condition.role != ''">
+                AND role LIKE CONCAT('%', #{condition.role}, '%')
+            </if>
+            <if test="condition.content != null and condition.content != ''">
+                AND content LIKE CONCAT('%', #{condition.content}, '%')
+            </if>
+            <if test="condition.sequence != null">
+                AND sequence = #{condition.sequence}
+            </if>
+            <if test="condition.createTime != null">
+                AND create_time = #{condition.createTime}
+            </if>
+        </where>
+    </sql>
+    
+    <!-- 条件查询 -->
+    <select id="selectByCondition" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_conversation_history
+        <include refid="Condition_Where_Clause"/>
     </select>
-
-    <select id="selectMaxSequence" resultType="java.lang.Integer">
+    
+    <!-- 分页条件查询 -->
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_conversation_history
+        <include refid="Condition_Where_Clause"/>
+    </select>
+    
+    <!-- 获取最大序列号 -->
+    <select id="getMaxSequence" resultType="java.lang.Integer">
         SELECT MAX(sequence) 
         FROM t_conversation_history 
         WHERE conversation_id = #{conversationId}
     </select>
+    
+    <!-- 插入历史记录 -->
+    <insert id="insert" parameterType="com.changjiang.elearn.domain.model.ConversationHistory">
+        INSERT INTO t_conversation_history (
+            history_id, conversation_id, role, content, sequence, create_time
+        ) VALUES (
+            #{historyId}, #{conversationId}, #{role}, #{content}, #{sequence}, #{createTime}
+        )
+    </insert>
+    
+    <!-- 基础的增删改查由 MyBatis-Plus 提供 -->
 </mapper> 

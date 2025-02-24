@@ -6,7 +6,7 @@ import java.io.Serializable;
 import java.util.List;
 
 @Data
-public class ConversationDto implements Serializable {
+public class ConversationInputDto implements Serializable {
     private String conversationId;
     private String userId;
     private String currentText;

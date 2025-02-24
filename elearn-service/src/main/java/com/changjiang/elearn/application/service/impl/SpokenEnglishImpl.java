@@ -12,6 +12,8 @@ import com.changjiang.elearn.domain.enums.DocumentStatus;
 import com.changjiang.elearn.domain.enums.StudyPlanStatus;
 import com.changjiang.elearn.domain.model.*;
 import com.changjiang.elearn.domain.repository.*;
+import com.changjiang.elearn.domain.repository.ConversationHistoryRepository;
+import com.changjiang.elearn.domain.repository.ConversationRepository;
 import com.changjiang.elearn.domain.repository.DailyStudyRepository;
 import com.changjiang.elearn.domain.repository.DocumentRepository;
 import com.changjiang.elearn.domain.repository.StudyPlanRepository;
@@ -28,7 +30,9 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.io.FileOutputStream;
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 英语学习服务实现类
@@ -87,7 +91,7 @@ public class SpokenEnglishImpl implements SpokenEnglish {
      * @return 语音文件对象
      */
     @Override
-    public FileObject spokenEnglish(ConversationDto conversationDto) {
+    public FileObject spokenEnglish(ConversationInputDto conversationDto) {
         log.info("英语口语练习开始：入参:{}", conversationDto);
         
         if (ObjectUtils.isEmpty(conversationDto) || StringUtils.isEmpty(conversationDto.getCurrentText())) {
@@ -101,8 +105,16 @@ public class SpokenEnglishImpl implements SpokenEnglish {
             jsonObject.put("prompt_template", conversationDto.getCurrentText());
             
             // 添加历史对话
-            if (conversationDto.getHistory() != null && !conversationDto.getHistory().isEmpty()) {
-                jsonObject.put("history", conversationDto.getHistory());
+            if (!CollectionUtils.isEmpty(conversationDto.getHistory())) {
+                List<JSONObject> historyList = conversationDto.getHistory().stream()
+                    .map(msg -> {
+                        JSONObject msgObj = new JSONObject();
+                        msgObj.put("role", msg.getRole());
+                        msgObj.put("content", msg.getContent());
+                        return msgObj;
+                    })
+                    .collect(Collectors.toList());
+                jsonObject.put("history", historyList);
             }
 
             // 调用Python服务
@@ -112,15 +124,14 @@ public class SpokenEnglishImpl implements SpokenEnglish {
                 FileObject.class
             );
             
+            // 获取AI回复的文本
+            String aiReplyText = fileObject.getFileText();
+
             // 保存对话历史
-            saveConversationHistory(conversationDto);
+            saveConversationHistory(conversationDto, aiReplyText);
             
+            // 设置音频文件名
             fileObject.setFileName(UUID.randomUUID().toString() + ".mp3");
-            
-            // 保存音频文件
-            try (FileOutputStream fos = new FileOutputStream("output.mp3")) {
-                fos.write(fileObject.getFileContent());
-            }
             
             log.info("英语口语练习结束：出参:{}", fileObject.getFileName());
             return fileObject;
@@ -130,34 +141,42 @@ public class SpokenEnglishImpl implements SpokenEnglish {
         }
     }
 
-    private void saveConversationHistory(ConversationDto conversationDto) {
+    private void saveConversationHistory(ConversationInputDto conversationDto, String aiReplyText) {
         // 如果是新对话，创建对话记录
         if (StringUtils.isEmpty(conversationDto.getConversationId())) {
-            Conversation conversation = new Conversation();
-            conversation.setId(UUID.randomUUID().toString());
-            conversation.setUserId(conversationDto.getUserId());
-            conversation.setTitle(conversationDto.getCurrentText().substring(0, 
-                Math.min(conversationDto.getCurrentText().length(), 50)));
+            String currentText = conversationDto.getCurrentText();
+            int maxLength = Math.min(currentText.length(), 10); // 取字符串长度和10的最小值
+            Conversation conversation = Conversation.builder()
+                .conversationId(CreateIdUtil.nextIdToString())
+                .userId(conversationDto.getUserId())
+                .title(conversationDto.getCurrentText().substring(0, maxLength))
+                .createTime(LocalDateTime.now())
+                .updateTime(LocalDateTime.now())
+                .build();
             conversationRepository.save(conversation);
-            conversationDto.setConversationId(conversation.getId());
+            conversationDto.setConversationId(conversation.getConversationId());
         }
 
         // 保存用户问题
-        ConversationHistory userMessage = new ConversationHistory();
-        userMessage.setId(UUID.randomUUID().toString());
-        userMessage.setConversationId(conversationDto.getConversationId());
-        userMessage.setRole("user");
-        userMessage.setContent(conversationDto.getCurrentText());
-        userMessage.setSequence(getNextSequence(conversationDto.getConversationId()));
+        ConversationHistory userMessage = ConversationHistory.builder()
+            .historyId(CreateIdUtil.nextIdToString())
+            .conversationId(conversationDto.getConversationId())
+            .role("user")
+            .content(conversationDto.getCurrentText())
+            .sequence(getNextSequence(conversationDto.getConversationId()))
+            .createTime(LocalDateTime.now())
+            .build();
         conversationHistoryRepository.save(userMessage);
 
         // 保存AI回答
-        ConversationHistory aiMessage = new ConversationHistory();
-        aiMessage.setId(UUID.randomUUID().toString());
-        aiMessage.setConversationId(conversationDto.getConversationId());
-        aiMessage.setRole("assistant");
-        aiMessage.setContent("AI语音回答"); // 可以保存语音文件路径或其他相关信息
-        aiMessage.setSequence(getNextSequence(conversationDto.getConversationId()));
+        ConversationHistory aiMessage = ConversationHistory.builder()
+            .historyId(CreateIdUtil.nextIdToString())
+            .conversationId(conversationDto.getConversationId())
+            .role("assistant")
+            .content(aiReplyText)
+            .sequence(getNextSequence(conversationDto.getConversationId()))
+            .createTime(LocalDateTime.now())
+            .build();
         conversationHistoryRepository.save(aiMessage);
     }
 
@@ -168,12 +187,20 @@ public class SpokenEnglishImpl implements SpokenEnglish {
 
     // 获取用户的对话列表
     public List<Conversation> getUserConversations(String userId) {
-        return conversationRepository.findByUserId(userId);
+        log.info("获取用户的对话列表开始：入参:{}", userId);
+        Conversation build = Conversation.builder().userId(userId).build();
+        List<Conversation> byCondition = conversationRepository.findByCondition(build);
+        log.info("获取用户的对话列表结束：出参:{}", byCondition);
+        return byCondition;
     }
 
     // 获取对话历史
     public List<ConversationHistory> getConversationHistory(String conversationId) {
-        return conversationHistoryRepository.findByConversationId(conversationId);
+        log.info("获取对话历史开始：入参:{}", conversationId);
+        ConversationHistory build = ConversationHistory.builder().conversationId(conversationId).build();
+        List<ConversationHistory> byCondition = conversationHistoryRepository.findByCondition(build);
+        log.info("获取对话历史结束：出参:{}", byCondition);
+        return byCondition;
     }
 
     /**
