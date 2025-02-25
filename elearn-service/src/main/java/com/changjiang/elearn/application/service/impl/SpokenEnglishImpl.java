@@ -17,7 +17,6 @@ import com.changjiang.grpc.annotation.GrpcService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
@@ -207,7 +206,7 @@ public class SpokenEnglishImpl implements SpokenEnglish {
      * @return 处理结果,包含提取的单词总数
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    //@Transactional(rollbackFor = Exception.class)
     public CommonRespDataDto dealInputFile(List<FileObject> fileObjects) {
         CommonRespDataDto response = new CommonRespDataDto();
         try {
@@ -230,7 +229,7 @@ public class SpokenEnglishImpl implements SpokenEnglish {
             for(FileObject file : fileObjects) {
                 // 保存文件
                 String docId = CreateIdUtil.nextIdToString();
-                file.setFileName(docId);
+                file.setFileName(docId + "." + getFileExtension(file.getFileName()));
                 String filePath = fileStorageService.saveFile(file);
                 // 创建文档记录,状态为待处理
                 DocumentDTO documentDTO = new DocumentDTO();
@@ -238,7 +237,7 @@ public class SpokenEnglishImpl implements SpokenEnglish {
                 documentDTO.setFilePath(filePath);
                 documentDTO.setStatus(DocumentStatus.PENDING.getCode());
                 documentDTO.setDocId(docId);
-                documentDTO.setFileSize((long)file.getFileContent().length);
+                //documentDTO.setFileSize((long)file.getFileContent().length);
                 documentDTO.setUserId(file.getUserId());
                 documentDTO.setPlanId(planId);
                 Document document = DocumentDTOMapper.INSTANCE.toDomain(documentDTO);

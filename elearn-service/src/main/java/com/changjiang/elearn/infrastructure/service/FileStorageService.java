@@ -1,17 +1,15 @@
 package com.changjiang.elearn.infrastructure.service;
 
 
+import com.changjiang.base.utils.Base64Utils;
 import com.changjiang.elearn.api.dto.FileObject;
 import com.changjiang.elearn.infrastructure.exception.BusinessException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.UUID;
 
 @Service
 public class FileStorageService {
@@ -28,13 +26,11 @@ public class FileStorageService {
             }
 
             // 生成文件名
-            String fileName = UUID.randomUUID().toString() + getFileExtension(fileObject.getFileName());
-            String filePath = uploadPath + File.separator + fileName;
+
+            String filePath = uploadPath + fileObject.getFileName();
 
             // 写入文件
-            try (FileOutputStream fos = new FileOutputStream(filePath)) {
-                fos.write(fileObject.getFileContent());
-            }
+            Base64Utils.decodeBase64ToFile(fileObject.getFileBase64(), filePath);
 
             return filePath;
         } catch (Exception e) {
