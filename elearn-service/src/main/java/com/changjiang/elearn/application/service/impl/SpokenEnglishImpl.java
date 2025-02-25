@@ -150,8 +150,8 @@ public class SpokenEnglishImpl implements SpokenEnglish {
                 .conversationId(CreateIdUtil.nextIdToString())
                 .userId(conversationDto.getUserId())
                 .title(conversationDto.getCurrentText().substring(0, maxLength))
-                .createTime(LocalDateTime.now())
-                .updateTime(LocalDateTime.now())
+                .createTime(new Date())
+                .updateTime(new Date())
                 .build();
             conversationRepository.save(conversation);
             conversationDto.setConversationId(conversation.getConversationId());
@@ -164,7 +164,7 @@ public class SpokenEnglishImpl implements SpokenEnglish {
             .role("user")
             .content(conversationDto.getCurrentText())
             .sequence(getNextSequence(conversationDto.getConversationId()))
-            .createTime(LocalDateTime.now())
+            .createTime(new Date())
             .build();
         conversationHistoryRepository.save(userMessage);
 
@@ -175,7 +175,7 @@ public class SpokenEnglishImpl implements SpokenEnglish {
             .role("assistant")
             .content(aiReplyText)
             .sequence(getNextSequence(conversationDto.getConversationId()))
-            .createTime(LocalDateTime.now())
+            .createTime(new Date())
             .build();
         conversationHistoryRepository.save(aiMessage);
     }

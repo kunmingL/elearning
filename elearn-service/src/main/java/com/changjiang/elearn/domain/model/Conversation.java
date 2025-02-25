@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.math.BigDecimal;
+import java.util.Date;
 
 /**
  * 对话表
@@ -30,14 +31,14 @@ public class Conversation {
     /**
      * 创建时间
      */
-    private LocalDateTime createTime;
+    private Date createTime;
     /**
      * 更新时间
      */
-    private LocalDateTime updateTime;
+    private Date updateTime;
 
     @Builder
-    public Conversation(String conversationId, String userId, String title, LocalDateTime createTime, LocalDateTime updateTime) {
+    public Conversation(String conversationId, String userId, String title, Date createTime, Date updateTime) {
         this.conversationId = conversationId;
         this.userId = userId;
         this.title = title;

@@ -5,6 +5,7 @@ import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.math.BigDecimal;
+import java.util.Date;
 
 /**
  * 对话历史记录表
@@ -38,5 +39,5 @@ public class ConversationHistoryDTO {
     /**
      * 创建时间
      */
-    private LocalDateTime createTime;
+    private Date createTime;
 } 

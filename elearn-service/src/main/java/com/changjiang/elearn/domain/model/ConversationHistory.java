@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.math.BigDecimal;
+import java.util.Date;
 
 /**
  * 对话历史记录表
@@ -38,10 +39,10 @@ public class ConversationHistory {
     /**
      * 创建时间
      */
-    private LocalDateTime createTime;
+    private Date createTime;
 
     @Builder
-    public ConversationHistory(String historyId, String conversationId, String role, String content, Integer sequence, LocalDateTime createTime) {
+    public ConversationHistory(String historyId, String conversationId, String role, String content, Integer sequence, Date createTime) {
         this.historyId = historyId;
         this.conversationId = conversationId;
         this.role = role;
