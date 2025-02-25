@@ -366,6 +366,15 @@ public class SpokenEnglishImpl implements SpokenEnglish {
         return response;
     }
 
+    public List<StudyPlanDTO> queryStudyPlan(String userid){
+        log.info("查询学习计划开始：入参:{}",userid);
+        StudyPlan build = StudyPlan.builder().userId(userid).build();
+        List<StudyPlan> studyPlans = studyPlanRepository.findByCondition(build);
+        List<StudyPlanDTO> dtoList = StudyPlanDTOMapper.INSTANCE.toDTOList(studyPlans);
+        log.info("查询学习计划结束：出参:{}",dtoList);
+        return dtoList;
+    }
+
     /**
      * 开始每日学习计划
      * 获取当天需要学习的单词并生成语音
