@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.math.BigDecimal;
+import java.util.Date;
 
 /**
  * 文档表
@@ -50,14 +51,14 @@ public class Document {
     /**
      * 创建时间
      */
-    private LocalDateTime createTime;
+    private Date createTime;
     /**
      * 更新时间
      */
-    private LocalDateTime updateTime;
+    private Date updateTime;
 
     @Builder
-    public Document(String docId, String planId, String userId, String fileName, String filePath, Long fileSize, Integer wordCount, Integer status, LocalDateTime createTime, LocalDateTime updateTime) {
+    public Document(String docId, String planId, String userId, String fileName, String filePath, Long fileSize, Integer wordCount, Integer status, Date createTime, Date updateTime) {
         this.docId = docId;
         this.planId = planId;
         this.userId = userId;

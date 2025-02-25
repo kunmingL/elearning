@@ -149,8 +149,8 @@ public class SpokenEnglishImpl implements SpokenEnglish {
                 .conversationId(CreateIdUtil.nextIdToString())
                 .userId(conversationDto.getUserId())
                 .title(conversationDto.getCurrentText().substring(0, maxLength))
-                .createTime(LocalDateTime.now())
-                .updateTime(LocalDateTime.now())
+                .createTime(new Date())
+                .updateTime(new Date())
                 .build();
             conversationRepository.save(conversation);
             conversationDto.setConversationId(conversation.getConversationId());
@@ -163,7 +163,7 @@ public class SpokenEnglishImpl implements SpokenEnglish {
             .role("user")
             .content(conversationDto.getCurrentText())
             .sequence(getNextSequence(conversationDto.getConversationId()))
-            .createTime(LocalDateTime.now())
+            .createTime(new Date())
             .build();
         conversationHistoryRepository.save(userMessage);
 
@@ -174,7 +174,7 @@ public class SpokenEnglishImpl implements SpokenEnglish {
             .role("assistant")
             .content(aiReplyText)
             .sequence(getNextSequence(conversationDto.getConversationId()))
-            .createTime(LocalDateTime.now())
+            .createTime(new Date())
             .build();
         conversationHistoryRepository.save(aiMessage);
     }
@@ -365,6 +365,15 @@ public class SpokenEnglishImpl implements SpokenEnglish {
         }
         
         return response;
+    }
+
+    public List<StudyPlanDTO> queryStudyPlan(String userid){
+        log.info("查询学习计划开始：入参:{}",userid);
+        StudyPlan build = StudyPlan.builder().userId(userid).build();
+        List<StudyPlan> studyPlans = studyPlanRepository.findByCondition(build);
+        List<StudyPlanDTO> dtoList = StudyPlanDTOMapper.INSTANCE.toDTOList(studyPlans);
+        log.info("查询学习计划结束：出参:{}",dtoList);
+        return dtoList;
     }
 
     /**

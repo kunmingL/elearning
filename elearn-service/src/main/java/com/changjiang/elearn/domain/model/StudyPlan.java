@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.math.BigDecimal;
+import java.util.Date;
 
 /**
  * 学习计划表
@@ -47,14 +48,14 @@ public class StudyPlan {
     /**
      * 创建时间
      */
-    private LocalDateTime createTime;
+    private Date createTime;
     /**
      * 更新时间
      */
-    private LocalDateTime updateTime;
+    private Date updateTime;
 
     @Builder
-    public StudyPlan(String planId, String userId, Integer dailyWords, Integer totalDays, Integer totalWords, Integer currentDay, Integer status, LocalDateTime createTime, LocalDateTime updateTime) {
+    public StudyPlan(String planId, String userId, Integer dailyWords, Integer totalDays, Integer totalWords, Integer currentDay, Integer status, Date createTime, Date updateTime) {
         this.planId = planId;
         this.userId = userId;
         this.dailyWords = dailyWords;

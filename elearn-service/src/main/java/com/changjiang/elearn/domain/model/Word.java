@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.math.BigDecimal;
+import java.util.Date;
 
 /**
  * 单词表
@@ -54,14 +55,14 @@ public class Word {
     /**
      * 创建时间
      */
-    private LocalDateTime createTime;
+    private Date createTime;
     /**
      * 更新时间
      */
-    private LocalDateTime updateTime;
+    private Date updateTime;
 
     @Builder
-    public Word(String wordId, String planId, String dailyId, Integer wordIdx, String word, String pronunciation, String wordTranslation, String sentence, String sentenceTranslation, LocalDateTime createTime, LocalDateTime updateTime) {
+    public Word(String wordId, String planId, String dailyId, Integer wordIdx, String word, String pronunciation, String wordTranslation, String sentence, String sentenceTranslation, Date createTime, Date updateTime) {
         this.wordId = wordId;
         this.planId = planId;
         this.dailyId = dailyId;

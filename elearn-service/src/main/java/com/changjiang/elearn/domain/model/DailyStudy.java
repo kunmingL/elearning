@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.math.BigDecimal;
+import java.util.Date;
 
 /**
  * 每日学习记录表
@@ -46,14 +47,14 @@ public class DailyStudy {
     /**
      * 创建时间
      */
-    private LocalDateTime createTime;
+    private Date createTime;
     /**
      * 更新时间
      */
-    private LocalDateTime updateTime;
+    private Date updateTime;
 
     @Builder
-    public DailyStudy(String dailyId, String planId, String userId, Integer studyDay, Integer currentWordIdx, Integer wordCount, Integer status, LocalDateTime createTime, LocalDateTime updateTime) {
+    public DailyStudy(String dailyId, String planId, String userId, Integer studyDay, Integer currentWordIdx, Integer wordCount, Integer status, Date createTime, Date updateTime) {
         this.dailyId = dailyId;
         this.planId = planId;
         this.userId = userId;
