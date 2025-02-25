@@ -2,7 +2,7 @@ package com.changjiang.elearn.domain.repository;
 
 import com.changjiang.elearn.domain.model.ConversationHistory;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+
 import java.util.List;
 
 /**

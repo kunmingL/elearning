@@ -10,27 +10,22 @@ import com.changjiang.elearn.domain.enums.DocumentStatus;
 import com.changjiang.elearn.domain.enums.StudyPlanStatus;
 import com.changjiang.elearn.domain.model.*;
 import com.changjiang.elearn.domain.repository.*;
-import com.changjiang.elearn.domain.repository.ConversationHistoryRepository;
-import com.changjiang.elearn.domain.repository.ConversationRepository;
-import com.changjiang.elearn.domain.repository.DailyStudyRepository;
-import com.changjiang.elearn.domain.repository.DocumentRepository;
-import com.changjiang.elearn.domain.repository.StudyPlanRepository;
-import com.changjiang.elearn.domain.repository.WordRepository;
 import com.changjiang.elearn.infrastructure.exception.BusinessException;
-import com.changjiang.elearn.infrastructure.persistence.dao.ConversationMapper;
 import com.changjiang.elearn.infrastructure.service.FileStorageService;
 import com.changjiang.elearn.utils.ElearnPythonRestClient;
 import com.changjiang.grpc.annotation.GrpcService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
-import java.io.FileOutputStream;
-import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -212,9 +207,9 @@ public class SpokenEnglishImpl implements SpokenEnglish {
      * @return 处理结果,包含提取的单词总数
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public CommonRespDataDto dealInputFile(List<FileObject> fileObjects) {
         CommonRespDataDto response = new CommonRespDataDto();
-        
         try {
             validateFiles(fileObjects);
             
@@ -278,7 +273,6 @@ public class SpokenEnglishImpl implements SpokenEnglish {
             response.setCode("2");
             response.setCodeMessage("系统错误,请稍后重试");
         }
-        
         return response;
     }
 
@@ -466,10 +460,10 @@ public class SpokenEnglishImpl implements SpokenEnglish {
         }
 
         for(FileObject file : files) {
-            // 检查文件大小
-            if(file.getFileContent().length > maxDocumentSize) {
-                throw new BusinessException("文件过大,最大支持" + maxDocumentSize/1024/1024 + "MB");
-            }
+            // // 检查文件大小
+            // if(file.getFileContent().length > maxDocumentSize) {
+            //     throw new BusinessException("文件过大,最大支持" + maxDocumentSize/1024/1024 + "MB");
+            // }
             
             // 检查文件格式
             String extension = getFileExtension(file.getFileName());
