@@ -4,9 +4,7 @@ import com.alibaba.fastjson2.JSONObject;
 import com.changjiang.base.utils.CreateIdUtil;
 import com.changjiang.elearn.api.dto.*;
 import com.changjiang.elearn.api.service.SpokenEnglish;
-import com.changjiang.elearn.application.assember.DocumentDTOMapper;
-import com.changjiang.elearn.application.assember.StudyPlanDTOMapper;
-import com.changjiang.elearn.application.assember.WordDTOMapper;
+import com.changjiang.elearn.application.assember.*;
 import com.changjiang.elearn.domain.enums.DailyStudyStatus;
 import com.changjiang.elearn.domain.enums.DocumentStatus;
 import com.changjiang.elearn.domain.enums.StudyPlanStatus;
@@ -19,6 +17,7 @@ import com.changjiang.elearn.domain.repository.DocumentRepository;
 import com.changjiang.elearn.domain.repository.StudyPlanRepository;
 import com.changjiang.elearn.domain.repository.WordRepository;
 import com.changjiang.elearn.infrastructure.exception.BusinessException;
+import com.changjiang.elearn.infrastructure.persistence.dao.ConversationMapper;
 import com.changjiang.elearn.infrastructure.service.FileStorageService;
 import com.changjiang.elearn.utils.ElearnPythonRestClient;
 import com.changjiang.grpc.annotation.GrpcService;
@@ -186,21 +185,23 @@ public class SpokenEnglishImpl implements SpokenEnglish {
     }
 
     // 获取用户的对话列表
-    public List<Conversation> getUserConversations(String userId) {
+    public List<ConversationDTO> getUserConversations(String userId) {
         log.info("获取用户的对话列表开始：入参:{}", userId);
         Conversation build = Conversation.builder().userId(userId).build();
-        List<Conversation> byCondition = conversationRepository.findByCondition(build);
-        log.info("获取用户的对话列表结束：出参:{}", byCondition);
-        return byCondition;
+        List<Conversation> conversations = conversationRepository.findByCondition(build);
+        List<ConversationDTO> dtoList = ConversationDTOMapper.INSTANCE.toDTOList(conversations);
+        log.info("获取用户的对话列表结束：出参:{}", dtoList);
+        return dtoList;
     }
 
     // 获取对话历史
-    public List<ConversationHistory> getConversationHistory(String conversationId) {
+    public List<ConversationHistoryDTO> getConversationHistory(String conversationId) {
         log.info("获取对话历史开始：入参:{}", conversationId);
         ConversationHistory build = ConversationHistory.builder().conversationId(conversationId).build();
-        List<ConversationHistory> byCondition = conversationHistoryRepository.findByCondition(build);
-        log.info("获取对话历史结束：出参:{}", byCondition);
-        return byCondition;
+        List<ConversationHistory> conversationHistories = conversationHistoryRepository.findByCondition(build);
+        List<ConversationHistoryDTO> conversationHistoryDTOS = ConversationHistoryDTOMapper.INSTANCE.toDTOList(conversationHistories);
+        log.info("获取对话历史结束：出参:{}", conversationHistoryDTOS);
+        return conversationHistoryDTOS;
     }
 
     /**

@@ -18,6 +18,21 @@ public interface SpokenEnglish {
     @ServiceConfig(registryId = "elearn", url = "/elearn/spokenEnglish", channel = {SrvChannel.PC, SrvChannel.MOBILE})
     FileObject spokenEnglish(ConversationInputDto conversationDto);
 
+    /**
+     * 根据用户id获取用户所有对话记录简要列表
+     * @param userId
+     * @return
+     */
+    @ServiceConfig(registryId = "elearn", url = "/elearn/getUserConversations", channel = {SrvChannel.PC, SrvChannel.MOBILE})
+    List<ConversationDTO> getUserConversations(String userId);
+
+    /**
+     * 根据对话id获取具体每个会话的对话记录
+     * @param conversationId
+     * @return
+     */
+    @ServiceConfig(registryId = "elearn", url = "/elearn/getConversationHistory", channel = {SrvChannel.PC, SrvChannel.MOBILE})
+    List<ConversationHistoryDTO> getConversationHistory(String conversationId);
 
     /**
      * 处理上传文件 支持（*.pdf, *.doc, *.docx, *.ppt, *.pptx, *.xls, *.xlsx,*.png,*.jpg）
