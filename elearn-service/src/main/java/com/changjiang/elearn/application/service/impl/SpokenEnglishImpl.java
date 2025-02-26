@@ -21,10 +21,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -61,7 +58,7 @@ public class SpokenEnglishImpl implements SpokenEnglish {
     @Value("${python.api.word-extract}")
     private String wordExtractApiUrl;
     
-    @Value("${python.api.study-plan}")
+    @Value("${python.api.word-extract}")
     private String studyPlanApiUrl;
     
     @Value("${document.max-size}")
@@ -225,6 +222,7 @@ public class SpokenEnglishImpl implements SpokenEnglish {
             studyPlanDTO.setUserId(fileObjects.get(0).getUserId());
             StudyPlan studyPlan = StudyPlanDTOMapper.INSTANCE.toDomain(studyPlanDTO);
             studyPlanRepository.save(studyPlan);
+            List<String> fileList = new ArrayList<>();
             //保存文件
             for(FileObject file : fileObjects) {
                 // 保存文件
@@ -242,27 +240,26 @@ public class SpokenEnglishImpl implements SpokenEnglish {
                 documentDTO.setPlanId(planId);
                 Document document = DocumentDTOMapper.INSTANCE.toDomain(documentDTO);
                 documentRepository.save(document);
-                
-                // 调用Python服务提取单词
-                //需要给python提供文件信息及对应的指令
-                JSONObject extractRequest = new JSONObject();
-                extractRequest.put("filePath", filePath);
-                String command = "请你分析提取该文件中的单词数量";
-                extractRequest.put("command", command);
-                JSONObject result = pythonRestClient.callPythonService(
-                    wordExtractApiUrl,
-                    extractRequest,
-                    JSONObject.class
-                );
-                
-                // 更新文档的单词数
-                totalWords += result.getIntValue("wordCount");
+                fileList.add(filePath);
             }
-            studyPlan.changeTotalwords(totalWords);
-            studyPlanRepository.update(studyPlan);
-            response.setCode("0");
-            response.setCodeMessage("文件处理成功");
-            response.setData(JSONObject.parseObject(String.valueOf(totalWords))); // 返回单词总数
+
+
+            // 调用Python服务提取单词
+            //需要给python提供文件信息及对应的指令
+            // JSONObject extractRequest = new JSONObject();
+            // extractRequest.put("filePath", fileList);
+            // String command = "请你分析提取该文件中的单词数量，只用返回一个数字,重点是只需要返回数字";
+            // extractRequest.put("prompt_template", command);
+            // Integer wordCount = pythonRestClient.callPythonService(
+            //         wordExtractApiUrl,
+            //         extractRequest,
+            //         Integer.class
+            // );
+            // studyPlan.changeTotalwords(wordCount);
+            // studyPlanRepository.update(studyPlan);
+            // response.setCode("0");
+            // response.setCodeMessage("文件处理成功");
+            // response.setData(JSONObject.parseObject(String.valueOf(totalWords))); // 返回单词总数
         } catch (BusinessException e) {
             log.error("处理上传文件失败: {}", e.getMessage());
             response.setCode("1");
