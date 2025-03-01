@@ -1,9 +1,8 @@
 package com.changjiang.elearn.application.service;
 
-import com.changjiang.elearn.api.dto.CommonRespDataDto;
+import com.changjiang.elearn.api.dto.DealInputFileRespDto;
 import com.changjiang.elearn.api.dto.FileObject;
 import com.changjiang.elearn.application.service.impl.SpokenEnglishImpl;
-import org.apache.tomcat.util.http.fileupload.FileUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -25,7 +24,7 @@ public class SpokenEnglishImplOnlineTest extends BaseJunitTest{
         fileObject.setUserId("770320622");
         fileObject.setFileContent(Files.readAllBytes(file.toPath()));
         fileObjects.add(fileObject);
-        CommonRespDataDto commonRespDataDto = spokenEnglish.dealInputFile(fileObjects);
-        System.out.println(commonRespDataDto);
+        DealInputFileRespDto dealInputFileRespDto = spokenEnglish.dealInputFile(fileObjects);
+        System.out.println(dealInputFileRespDto);
     }
 }
