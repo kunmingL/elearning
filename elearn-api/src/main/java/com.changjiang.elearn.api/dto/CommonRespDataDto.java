@@ -1,8 +1,6 @@
 package com.changjiang.elearn.api.dto;
 
-import com.alibaba.fastjson2.JSONObject;
 import lombok.Data;
-
 
 import java.io.Serializable;
 
@@ -19,5 +17,5 @@ public class CommonRespDataDto implements Serializable {
     /**
      * 返回数据
      */
-    private JSONObject data;
+    private Object data;
 }

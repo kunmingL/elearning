@@ -1,13 +1,9 @@
 package com.changjiang.elearn.domain.model;
 
 import lombok.Builder;
-import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-import java.time.LocalDate;
-import java.math.BigDecimal;
 import java.util.Date;
 
 /**
@@ -67,7 +63,7 @@ public class DailyStudy {
     }
 
     public void changeCurrentWordIdx(Integer currentWordIdx){
-        this.currentWordIdx = this.currentWordIdx;
+        this.currentWordIdx = currentWordIdx;
     }
 
     public void changeStatus(Integer status){

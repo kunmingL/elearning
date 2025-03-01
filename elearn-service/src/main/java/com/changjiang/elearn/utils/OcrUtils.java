@@ -2,11 +2,17 @@ package com.changjiang.elearn.utils;
 
 import net.sourceforge.tess4j.Tesseract;
 import net.sourceforge.tess4j.TesseractException;
+import org.opencv.core.Core;
+import org.opencv.core.Mat;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
@@ -19,6 +25,9 @@ import java.util.stream.Collectors;
 public class OcrUtils {
 
     private static final Logger log = LoggerFactory.getLogger(OcrUtils.class);
+    static {
+        System.loadLibrary(Core.NATIVE_LIBRARY_NAME); // 加载 OpenCV 库
+    }
 
     @Value("${ocr.data.path}")
     private String ocrDataPath;
@@ -49,12 +58,18 @@ public class OcrUtils {
                 .map(Language::getCode)
                 .collect(Collectors.joining("+"));
 
+        // 图片预处理
+        Mat image = Imgcodecs.imread(filePath, Imgcodecs.IMREAD_GRAYSCALE);
+        Mat binaryImage = new Mat();
+        Imgproc.threshold(image, binaryImage, 128, 255, Imgproc.THRESH_BINARY);
+        BufferedImage bufferedImage = matToBufferedImage(binaryImage);
+
         Tesseract tesseract = new Tesseract();
         tesseract.setDatapath(ocrDataPath);
         tesseract.setLanguage(languageCode);
 
         try {
-            return tesseract.doOCR(imageFile);
+            return tesseract.doOCR(bufferedImage);
         } catch (TesseractException e) {
             log.error("OCR 识别失败: {}", e.getMessage(), e);
             throw new RuntimeException("OCR 识别失败", e);
@@ -93,5 +108,28 @@ public class OcrUtils {
         return resultMap.values().stream()
                 .filter(Objects::nonNull)
                 .collect(Collectors.joining("\n--- 分割线 ---\n"));
+    }
+
+    /**
+     * 将 OpenCV 的 Mat 对象转换为 BufferedImage
+     *
+     * @param mat OpenCV 的 Mat 对象
+     * @return 转换后的 BufferedImage
+     */
+    private static BufferedImage matToBufferedImage(Mat mat) {
+        int type = BufferedImage.TYPE_BYTE_GRAY;
+        if (mat.channels() > 1) {
+            type = BufferedImage.TYPE_3BYTE_BGR;
+        }
+
+        int bufferSize = mat.channels() * mat.cols() * mat.rows();
+        byte[] buffer = new byte[bufferSize];
+        mat.get(0, 0, buffer); // 将 Mat 数据复制到 byte 数组中
+
+        BufferedImage image = new BufferedImage(mat.cols(), mat.rows(), type);
+        byte[] targetPixels = ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
+        System.arraycopy(buffer, 0, targetPixels, 0, buffer.length); // 将数据复制到 BufferedImage
+
+        return image;
     }
 }

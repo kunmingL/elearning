@@ -1,6 +1,8 @@
 package com.changjiang.elearn.application.service.impl;
 
+import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
+import com.alibaba.fastjson2.TypeReference;
 import com.changjiang.base.utils.CreateIdUtil;
 import com.changjiang.elearn.api.dto.*;
 import com.changjiang.elearn.api.service.SpokenEnglish;
@@ -8,11 +10,14 @@ import com.changjiang.elearn.application.assember.*;
 import com.changjiang.elearn.domain.enums.DailyStudyStatus;
 import com.changjiang.elearn.domain.enums.DocumentStatus;
 import com.changjiang.elearn.domain.enums.StudyPlanStatus;
+import com.changjiang.elearn.domain.enums.TemplateEnum;
 import com.changjiang.elearn.domain.model.*;
 import com.changjiang.elearn.domain.repository.*;
 import com.changjiang.elearn.infrastructure.exception.BusinessException;
 import com.changjiang.elearn.infrastructure.service.FileStorageService;
 import com.changjiang.elearn.utils.ElearnPythonRestClient;
+import com.changjiang.elearn.utils.Language;
+import com.changjiang.elearn.utils.OcrUtils;
 import com.changjiang.grpc.annotation.GrpcService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,6 +78,11 @@ public class SpokenEnglishImpl implements SpokenEnglish {
     @Autowired
     private DailyStudyRepository dailyStudyRepository;
 
+    @Autowired
+    private OcrUtils ocrUtils;
+
+    @Autowired
+    private ElearnPythonRestClient elearnPythonRestClient;
     /**
      * 英语口语练习
      * 将文本转换为语音
@@ -108,20 +118,22 @@ public class SpokenEnglishImpl implements SpokenEnglish {
             }
 
             // 调用Python服务
-            FileObject fileObject = pythonRestClient.fileObjCallPythonService(
+            String aiReplyText = pythonRestClient.callPythonService(
                 speechApiUrl, 
                 jsonObject,
-                FileObject.class
+                String.class
             );
             
             // 获取AI回复的文本
-            String aiReplyText = fileObject.getFileText();
+           // String aiReplyText = fileObject.getFileText();
 
             // 保存对话历史
             saveConversationHistory(conversationDto, aiReplyText);
             
             // 设置音频文件名
-            fileObject.setFileName(UUID.randomUUID().toString() + ".mp3");
+            FileObject fileObject = new FileObject();
+            fileObject.setFileText(aiReplyText);
+            fileObject.setFileName(CreateIdUtil.nextIdToString() + ".mp3");
             
             log.info("英语口语练习结束：出参:{}", fileObject.getFileName());
             return fileObject;
@@ -204,12 +216,10 @@ public class SpokenEnglishImpl implements SpokenEnglish {
      */
     @Override
     //@Transactional(rollbackFor = Exception.class)
-    public CommonRespDataDto dealInputFile(List<FileObject> fileObjects) {
-        CommonRespDataDto response = new CommonRespDataDto();
+    public DealInputFileRespDto dealInputFile(List<FileObject> fileObjects) {
+        DealInputFileRespDto response = new DealInputFileRespDto();
         try {
             validateFiles(fileObjects);
-            
-            int totalWords = 0;
             //在此处由于还未生成用户的学习计划，所以需要先创建学习计划的数据，并且生成一条学习计划id占位，与document关联
             //此处仅保存文件属性即可，待AI分析出这批文件所包含的单词总数，更新到学习计划中。并返回该数据。
 
@@ -220,9 +230,10 @@ public class SpokenEnglishImpl implements SpokenEnglish {
             studyPlanDTO.setStatus(StudyPlanStatus.UN_EFFECTIVE.getCode());
             // 默认一批文件同一个用户上传
             studyPlanDTO.setUserId(fileObjects.get(0).getUserId());
-            StudyPlan studyPlan = StudyPlanDTOMapper.INSTANCE.toDomain(studyPlanDTO);
-            studyPlanRepository.save(studyPlan);
-            List<String> fileList = new ArrayList<>();
+
+            //studyPlanRepository.save(studyPlan);
+            Map<String, List<Language>> fileLanguageMap = new HashMap<>();
+            List<String> filePaths = new ArrayList<>();
             //保存文件
             for(FileObject file : fileObjects) {
                 // 保存文件
@@ -240,35 +251,48 @@ public class SpokenEnglishImpl implements SpokenEnglish {
                 documentDTO.setPlanId(planId);
                 Document document = DocumentDTOMapper.INSTANCE.toDomain(documentDTO);
                 documentRepository.save(document);
-                fileList.add(filePath);
+                //fileLanguageMap.put(filePath,Arrays.asList(Language.ENG));
+                filePaths.add(filePath);
             }
-
+            //先进行ORC内容识别，再提交给AI处理
+            //Map<String, String> stringStringMap = ocrUtils.aggregateOcrResults(fileLanguageMap);
+            //String results = ocrUtils.mergeOcrResultsToString(stringStringMap);
 
             // 调用Python服务提取单词
             //需要给python提供文件信息及对应的指令
-            // JSONObject extractRequest = new JSONObject();
-            // extractRequest.put("filePath", fileList);
-            // String command = "请你分析提取该文件中的单词数量，只用返回一个数字,重点是只需要返回数字";
-            // extractRequest.put("prompt_template", command);
-            // Integer wordCount = pythonRestClient.callPythonService(
-            //         wordExtractApiUrl,
-            //         extractRequest,
-            //         Integer.class
-            // );
-            // studyPlan.changeTotalwords(wordCount);
-            // studyPlanRepository.update(studyPlan);
-            // response.setCode("0");
+             JSONObject extractRequest = new JSONObject();
+             extractRequest.put("filePath", filePaths);
+             String command = "请你分析提取输入内容的重点英文单词数量。重点单词的提取规则如下：\n" +
+                     "1. **特殊标记的单词**：如果文件中有加粗、斜体、下划线或其他特殊标记的单词，提取这些单词。\n" +
+                     "2. **考试词汇**：如果单词属于 CET-4、CET-6、雅思、托福等考试词汇，提取这些单词。\n" +
+                     "3. **单词列表**：如果文件是一个单词列表，则提取其中全部英文单词。\n" +
+                     "4. **重复单词**：如果一个单词在文件中多次出现，只计算一次。\n" +
+                     "\n" +
+                     "请严格按照以上规则提取重点单词，并只返回一个数字，表示提取出的重点单词数量。不要返回任何其他内容。";
+            extractRequest.put("prompt_template", command);
+            String wordCount = pythonRestClient.callPythonService(
+                    wordExtractApiUrl,
+                    extractRequest,
+                    String.class
+            );
+            studyPlanDTO.setTotalWords(Integer.parseInt(wordCount));
+            StudyPlan studyPlan = StudyPlanDTOMapper.INSTANCE.toDomain(studyPlanDTO);
+            studyPlanRepository.save(studyPlan);
+            // response.setCode("200");
             // response.setCodeMessage("文件处理成功");
-            // response.setData(JSONObject.parseObject(String.valueOf(totalWords))); // 返回单词总数
+            // response.setData(wordCount); // 返回单词总数
+            response.setTotalWords(studyPlan.getTotalWords());
+            response.setStudyPlanId(studyPlan.getPlanId());
         } catch (BusinessException e) {
             log.error("处理上传文件失败: {}", e.getMessage());
-            response.setCode("1");
-            response.setCodeMessage(e.getMessage());
+            // response.setCode("1");
+            // response.setCodeMessage(e.getMessage());
         } catch (Exception e) {
             log.error("处理上传文件发生系统错误", e);
-            response.setCode("2");
-            response.setCodeMessage("系统错误,请稍后重试");
+            // response.setCode("2");
+            // response.setCodeMessage("系统错误,请稍后重试");
         }
+        log.info("处理上传文件结束：出参:{}", response);
         return response;
     }
 
@@ -285,8 +309,7 @@ public class SpokenEnglishImpl implements SpokenEnglish {
         try {
             validateScheduleParams(studyPlanDTO);
             // 根据用户id，计划id，查找待处理的文档
-            Document document = Document.builder().userId(studyPlanDTO.getUserId())
-                    .planId(studyPlanDTO.getPlanId())
+            Document document = Document.builder().planId(studyPlanDTO.getPlanId())
                     .status(DocumentStatus.PENDING.getCode())
                     .build();
 
@@ -299,50 +322,62 @@ public class SpokenEnglishImpl implements SpokenEnglish {
             //遍历map，将每个list中的单词保存到数据库中
             //在这里需要同时生成每天学习计划和每天具体单词
             //将其拼接成一段提示此输入给ai
-            // request.put("dailyWords", studyPlanDTO.getDailyWords());
-            // request.put("countWords", userScheduleDto.getCountWords());
-            // request.put("studyModel", userScheduleDto.getStudyModel());
-            //request.put("documentIds", documents.stream().map(Document::getUserId).toList());
-
+            StringBuilder command = new StringBuilder();
+            TemplateEnum templateEnumByCode = TemplateEnum.getTemplateEnumByCode(studyPlanDTO.getTemplateModel());
+            String templateName = templateEnumByCode.getTemplateName();
+            command.append("请你将这些文档，总共")
+                    .append(studyPlanDTO.getTotalWords())
+                    .append("个英文单词（除了最后一天外），按照平均每天")
+                    .append(studyPlanDTO.getDailyWords())
+                    .append("个单词进行整理，并按照以下模版输出：")
+                    .append(templateName)
+                    .append("具体要求：\n" +
+                            "1. 输出一个完整的 JSON 对象，key 是天数（整数类型），value 是每天学习的单词列表。\n" +
+                            "2. 每个单词列表中的对象必须包含模版中属性：\n" +
+                            "3. 输出一个纯净的 JSON 对象，不要包含任何额外文本或标记（如 ```json 或 Note:）。\n" +
+                            "4. 严格按照上述格式输出，不要添加任何解释或多余话术。\n" +
+                            "5. 确保 JSON 对象是完整的，并以 `}` 结尾。\n");
             JSONObject request = new JSONObject();
-            JSONObject result = pythonRestClient.callPythonService(
+            request.put("prompt_template", command.toString());
+            request.put("filePath", documents.stream().map(Document::getFilePath).toList());
+            JSONObject jsonObject = elearnPythonRestClient.createStudyPlan(
                     studyPlanApiUrl,
-                    request,
-                    JSONObject.class
+                    request
             );
-
-            // for (Map.Entry<Integer, List<Object>> entry : result.entrySet()) {
-            //     Integer day = entry.getKey();
-            //     DailyStudy dailyStudy = DailyStudy.builder().planId(studyPlanDTO.getPlanId())
-            //             .userId(studyPlanDTO.getUserId())
-            //             .studyDay(day)
-            //             .wordCount(entry.getValue().size())
-            //             .status(DailyStudyStatus.UN_STARTED.getCode())
-            //             .currentWordIdx(0)
-            //             .build();
-            //     dailyStudyRepository.save(dailyStudy);
-            //     List<Object> wordList = entry.getValue();
-            //     for (int i = 0; i < wordList.size(); i++) {
-            //         JSONObject wordJson = (JSONObject) wordList.get(i);
-            //         Word.builder().word(wordJson.getString("word"))
-            //                 .pronunciation(wordJson.getString("pronunciation"))
-            //                 .wordTranslation(wordJson.getString("wordTranslation"))
-            //                 .sentence(wordJson.getString("sentence"))
-            //                 .sentenceTranslation(wordJson.getString("sentenceTranslation"))
-            //                 .wordId(CreateIdUtil.nextIdToString())
-            //                 .wordIdx(i)
-            //                 .planId(studyPlanDTO.getPlanId())
-            //                 .build();
-            //     }
-            //
-            //     for (Document doc : documents) {
-            //         // 调用Python服务生成学习计划和单词列表
-            //         // 更新文档用户ID并标记为已完成
-            //         doc.changeStatus(DocumentStatus.COMPLETED.getCode());
-            //         documentRepository.update(doc);
-            //     }
-            //     response.setCode("0");
-            //     response.setCodeMessage("学习计划创建成功");
+            // JSONObject jsonObject = new JSONObject();
+            // jsonObject.put("response", "{\"1\":[{\"word\":\"cult\",\"pronunciation\":\"/kʌlt/\",\"wordTranslation\":\"崇拜，宗派\",\"sentence\":\"Butthecultoftheauthenticandthepersonal,'doingourownthing',hasspeltthedeathofformalspeech,writing,poetryandmusic.\",\"sentenceTranslation\":\"但是，对真实和个人的崇拜，和对“做我们自己的事”的追求，已经导致了正式演讲、写作、诗歌和音乐的消亡。\"},{\"word\":\"authentic\",\"pronunciation\":\"/ɔːˈθentɪk/\",\"wordTranslation\":\"真实的，可信的\",\"sentence\":\"Butthecultoftheauthenticandthepersonal,'doingourownthing',hasspeltthedeathofformalspeech,writing,poetryandmusic.\",\"sentenceTranslation\":\"但是，对真实和个人的崇拜，和对“做我们自己的事”的追求，已经导致了正式演讲、写作、诗歌和音乐的消亡。\"},{\"word\":\"spelt\",\"pronunciation\":\"/spelt/\",\"wordTranslation\":\"拼写（spell的过去式）；导致\",\"sentence\":\"Butthecultoftheauthenticandthepersonal,'doingourownthing',hasspeltthedeathofformalspeech,writing,poetryandmusic.\",\"sentenceTranslation\":\"但是，对真实和个人的崇拜，和对“做我们自己的事”的追求，已经导致了正式演讲、写作、诗歌和音乐的消亡。\"},{\"word\":\"formal\",\"pronunciation\":\"/ˈfɔːrml/\",\"wordTranslation\":\"正式的\",\"sentence\":\"Butthecultoftheauthenticandthepersonal,'doingourownthing',hasspeltthedeathofformalspeech,writing,poetryandmusic.\",\"sentenceTranslation\":\"但是，对真实和个人的崇拜，和对“做我们自己的事”的追求，已经导致了正式演讲、写作、诗歌和音乐的消亡。\"},{\"word\":\"methodologies\",\"pronunciation\":\"/mɛθəˈdɒlədʒɪz/\",\"wordTranslation\":\"方法论\",\"sentence\":\"Socialsciencemethodologieshadtobeadaptedtoadisciplinegovernedbytheprimacyofhistoricalsourcesratherthantheimperativesofthecontemporaryworld.\",\"sentenceTranslation\":\"社会科学方法论必须进行改变以适应这样一个学科，其受史料至上的支配，而不是受当代社会的需要的支配。\"}],\"2\":[{\"word\":\"discipline\",\"pronunciation\":\"/ˈdɪsɪplɪn/\",\"wordTranslation\":\"学科，训练\",\"sentence\":\"Socialsciencemethodologieshadtobeadaptedtoadisciplinegovernedbytheprimacyofhistoricalsourcesratherthantheimperativesofthecontemporaryworld.\",\"sentenceTranslation\":\"社会科学方法论必须进行改变以适应这样一个学科，其受史料至上的支配，而不是受当代社会的需要的支配。\"},{\"word\":\"primacy\",\"pronunciation\":\"/ˈpraɪməsi/\",\"wordTranslation\":\"首要地位\",\"sentence\":\"Socialsciencemethodologieshadtobeadaptedtoadisciplinegovernedbytheprimacyofhistoricalsourcesratherthantheimperativesofthecontemporaryworld.\",\"sentenceTranslation\":\"社会科学方法论必须进行改变以适应这样一个学科，其受史料至上的支配，而不是受当代社会的需要的支配。\"},{\"word\":\"historical\",\"pronunciation\":\"/hɪˈstɒrɪkl/\",\"wordTranslation\":\"历史的\",\"sentence\":\"Socialsciencemethodologieshadtobeadaptedtoadisciplinegovernedbytheprimacyofhistoricalsourcesratherthantheimperativesofthecontemporaryworld.\",\"sentenceTranslation\":\"社会科学方法论必须进行改变以适应这样一个学科，其受史料至上的支配，而不是受当代社会的需要的支配。\"},{\"word\":\"imperatives\",\"pronunciation\":\"/ɪmˈpɛrətɪvz/\",\"wordTranslation\":\"命令，要求\",\"sentence\":\"Socialsciencemethodologieshadtobeadaptedtoadisciplinegovernedbytheprimacyofhistoricalsourcesratherthantheimperativesofthecontemporaryworld.\",\"sentenceTranslation\":\"社会科学方法论必须进行改变以适应这样一个学科，其受史料至上的支配，而不是受当代社会的需要的支配。\"},{\"word\":\"infer\",\"pronunciation\":\"/ɪnˈfɜːr/\",\"wordTranslation\":\"推断\",\"sentence\":\"Youinferinformationyoufeelthewriterhasinvitedyoutograspbypresentingyouwithspecificevidenceandclues.\",\"sentenceTranslation\":\"你通过提供的具体证据和线索，来推断你认为作者想让你掌握的信息。\"}],\"3\":[{\"word\":\"presenting\",\"pronunciation\":\"/prɪˈzentɪŋ/\",\"wordTranslation\":\"呈现\",\"sentence\":\"Youinferinformationyoufeelthewriterhasinvitedyoutograspbypresentingyouwithspecificevidenceandclues.\",\"sentenceTranslation\":\"你通过提供的具体证据和线索，来推断你认为作者想让你掌握的信息。\"},{\"word\":\"global\",\"pronunciation\":\"/ˈɡloʊbəl/\",\"wordTranslation\":\"全球的\",\"sentence\":\"Withtheglobalpopulationpredictedtohitcloseto10billionby2050,andforecaststhatagriculturalproductioninsomeregionswillneedtonearlydoubletokeeppace,foodsecurityisincreasinglymakingheadlines.\",\"sentenceTranslation\":\"预计到2050年，全球人口将多达近100亿，预计若要跟上步伐，某些地区的农业产量需接近翻倍，因此，粮食保障问题在越来越多地占据头条新闻。\"},{\"word\":\"forecast\",\"pronunciation\":\"/ˈfɔːrkɑːst/\",\"wordTranslation\":\"预测\",\"sentence\":\"Withtheglobalpopulationpredictedtohitcloseto10billionby2050,andforecaststhatagriculturalproductioninsomeregionswillneedtonearlydoubletokeeppace,foodsecurityisincreasinglymakingheadlines.\",\"sentenceTranslation\":\"预计到2050年，全球人口将多达近100亿，预计若要跟上步伐，某些地区的农业产量需接近翻倍，因此，粮食保障问题在越来越多地占据头条新闻。\"},{\"word\":\"agricultural\",\"pronunciation\":\"/ˌæɡrɪˈkʌltʃərəl/\",\"wordTranslation\":\"农业的\",\"sentence\":\"Withtheglobalpopulationpredictedtohitcloseto10billionby2050,andforecaststhatagriculturalproductioninsomeregionswillneedtonearlydoubletokeeppace,foodsecurityisincreasinglymakingheadlines.\",\"sentenceTranslation\":\"预计到2050年，全球人口将多达近100亿，预计若要跟上步伐，某些地区的农业产量需接近翻倍，因此，粮食保障问题在越来越多地占据头条新闻。\"},{\"word\":\"headlines\",\"pronunciation\":\"/ˈhedlaɪnz/\",\"wordTranslation\":\"头条新闻\",\"sentence\":\"Withtheglobalpopulationpredictedtohitcloseto10billionby2050,andforecaststhatagriculturalproductioninsomeregionswillneedtonearlydoubletokeeppace,foodsecurityisincreasinglymakingheadlines.\",\"sentenceTranslation\":\"预计到2050年，全球人口将多达近100亿，预计若要跟上步伐，某些地区的农业产量需接近翻倍，因此，粮食保障问题在越来越多地占据头条新闻。\"}],\"4\":[{\"word\":\"vision\",\"pronunciation\":\"/ˈvɪʒn/\",\"wordTranslation\":\"远见，愿景\",\"sentence\":\"Itishardtogetright,andrequiresaremarkabledegreeofvision,aswellascooperationbetweencityauthorities,theprivatesector,communitygroupsandculturalorganizations.\",\"sentenceTranslation\":\"成功做到这些很难，不仅需要非同凡响的远见卓识，还需要地方当局、私营部门、社会团体和文化组织间的合作。\"},{\"word\":\"cooperation\",\"pronunciation\":\"/koʊˌɑːpəˈreɪʃn/\",\"wordTranslation\":\"合作\",\"sentence\":\"Itishardtogetright,andrequiresaremarkabledegreeofvision,aswellascooperationbetweencityauthorities,theprivatesector,communitygroupsandculturalorganizations.\",\"sentenceTranslation\":\"成功做到这些很难，不仅需要非同凡响的远见卓识，还需要地方当局、私营部门、社会团体和文化组织间的合作。\"},{\"word\":\"authority\",\"pronunciation\":\"/əˈθɔːrɪti/\",\"wordTranslation\":\"权威，当局\",\"sentence\":\"Itishardtogetright,andrequiresaremarkabledegreeofvision,aswellascooperationbetweencityauthorities,theprivatesector,communitygroupsandculturalorganizations.\",\"sentenceTranslation\":\"成功做到这些很难，不仅需要非同凡响的远见卓识，还需要地方当局、私营部门、社会团体和文化组织间的合作。\"},{\"word\":\"sector\",\"pronunciation\":\"/ˈsektər/\",\"wordTranslation\":\"部门，领域\",\"sentence\":\"Itishardtogetright,andrequiresaremarkabledegreeofvision,aswellascooperationbetweencityauthorities,theprivatesector,communitygroupsandculturalorganizations.\",\"sentenceTranslation\":\"成功做到这些很难，不仅需要非同凡响的远见卓识，还需要地方当局、私营部门、社会团体和文化组织间的合作。\"},{\"word\":\"organization\",\"pronunciation\":\"/ˌɔːrɡənaɪˈzeɪʃn/\",\"wordTranslation\":\"组织\",\"sentence\":\"Itishardtogetright,andrequiresaremarkabledegreeofvision,aswellascooperationbetweencityauthorities,theprivatesector,communitygroupsandculturalorganizations.\",\"sentenceTranslation\":\"成功做到这些很难，不仅需要非同凡响的远见卓识，还需要地方当局、私营部门、社会团体和文化组织间的合作。\"}],\"5\":[{\"word\":\"economic\",\"pronunciation\":\"/ɪˈkɑːnəmɪk/\",\"wordTranslation\":\"经济的\",\"sentence\":\"That'sbecauseeconomicgrowthcanbecorrelatedwithenvironmentaldegradation,whileprotectingtheenvironmentissometimescorrelatedwithgreaterpoverty.\",\"sentenceTranslation\":\"这是因为经济增长可能与环境恶化相关，而环境保护有时与贫困恶化相关。\"},{\"word\":\"correlated\",\"pronunciation\":\"/ˈkɔːrəleɪtɪd/\",\"wordTranslation\":\"相关的\",\"sentence\":\"That'sbecauseeconomicgrowthcanbecorrelatedwithenvironmentaldegradation,whileprotectingtheenvironmentissometimescorrelatedwithgreaterpoverty.\",\"sentenceTranslation\":\"这是因为经济增长可能与环境恶化相关，而环境保护有时与贫困恶化相关。\"},{\"word\":\"degradation\",\"pronunciation\":\"/ˌdiːɡrəˈdeɪʃn/\",\"wordTranslation\":\"退化，恶化\",\"sentence\":\"That'sbecauseeconomicgrowthcanbecorrelatedwithenvironmentaldegradation,whileprotectingtheenvironmentissometimescorrelatedwithgreaterpoverty.\",\"sentenceTranslation\":\"这是因为经济增长可能与环境恶化相关，而环境保护有时与贫困恶化相关。\"},{\"word\":\"environment\",\"pronunciation\":\"/ɪnˈvaɪrənmənt/\",\"wordTranslation\":\"环境\",\"sentence\":\"That'sbecauseeconomicgrowthcanbecorrelatedwithenvironmentaldegradation,whileprotectingtheenvironmentissometimescorrelatedwithgreaterpoverty.\",\"sentenceTranslation\":\"这是因为经济增长可能与环境恶化相关，而环境保护有时与贫困恶化相关。\"},{\"word\":\"poverty\",\"pronunciation\":\"/ˈpɑːvərti/\",\"wordTranslation\":\"贫困\",\"sentence\":\"That'sbecauseeconomicgrowthcanbecorrelatedwithenvironmentaldegradation,whileprotectingtheenvironmentissometimescorrelatedwithgreaterpoverty.\",\"sentenceTranslation\":\"这是因为经济增长可能与环境恶化相关，而环境保护有时与贫困恶化相关。\"}]}");
+            System.out.println(jsonObject);
+            // 解析为 Map<Integer, List<WordInfo>>
+            Map<String, List<WordDTO>> wordMap = JSON.parseObject(
+                    jsonObject.get("response").toString(),
+                    new TypeReference<Map<String, List<WordDTO>>>() {}
+            );
+            wordMap.forEach((day, wordList) -> {
+                String dailyId = CreateIdUtil.nextIdToString();
+                    DailyStudy dailyStudy = DailyStudy.builder().dailyId(dailyId).planId(studyPlanDTO.getPlanId())
+                            .userId(studyPlanDTO.getUserId())
+                            .studyDay(Integer.parseInt(day))
+                            .wordCount(wordList.size())
+                            .status(DailyStudyStatus.UN_STARTED.getCode())
+                            .currentWordIdx(0)
+                            .build();
+                    dailyStudyRepository.save(dailyStudy);
+                for (WordDTO wordDTO : wordList) {
+                    wordDTO.setPlanId(studyPlanDTO.getPlanId());
+                    wordDTO.setWordId(CreateIdUtil.nextIdToString());
+                    wordDTO.setDailyId(dailyId);
+                    wordDTO.setWordIdx(wordList.indexOf(wordDTO));
+                    wordRepository.save(WordDTOMapper.INSTANCE.toDomain(wordDTO));
+                }
+            });
+                for (Document doc : documents) {
+                    // 调用Python服务生成学习计划和单词列表
+                    // 更新文档用户ID并标记为已完成
+                    doc.changeStatus(DocumentStatus.COMPLETED.getCode());
+                    documentRepository.update(doc);
+                }
+                response.setCode("0");
+                response.setCodeMessage("学习计划创建成功");
             // }
         }catch (BusinessException e) {
             log.error("创建学习计划失败: {}", e.getMessage());
@@ -404,7 +439,7 @@ public class SpokenEnglishImpl implements SpokenEnglish {
             Word word = words.get(0);
             WordDTO wordDTO = WordDTOMapper.INSTANCE.toDTO(word);
             //更新当前单词学习进度
-            dailyStudy.changeCurrentWordIdx(dailyStudy.getCurrentWordIdx() + 1);
+            dailyStudy.changeCurrentWordIdx(dailyStudy.getCurrentWordIdx()+1);
             //验证是否已经完成当天计划
             if(dailyStudy.getCurrentWordIdx() >= dailyStudy.getWordCount()) {
                 // 更新学习进度
@@ -414,6 +449,7 @@ public class SpokenEnglishImpl implements SpokenEnglish {
                 dailyStudy.changeStatus(DailyStudyStatus.COMPLETED.getCode());
                 dailyStudyRepository.update(dailyStudy);
             }
+            dailyStudyRepository.update(dailyStudy);
             return wordDTO;
             // 生成单词音频
             // 调用Python服务生成发音 暂时不调用音频 让前端生成

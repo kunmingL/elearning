@@ -41,15 +41,23 @@ public interface SpokenEnglish {
      * @return
      */
     @ServiceConfig(registryId = "elearn", url = "/elearn/dealInputFile", channel = {SrvChannel.PC, SrvChannel.MOBILE})
-    CommonRespDataDto dealInputFile(List<FileObject> fileObjects);
+    DealInputFileRespDto dealInputFile(List<FileObject> fileObjects);
 
     /**
      * 根据处理用户上传的学习计划，生成计划
      * 计划包含 每天学习个数、学习天数
      * @return
      */
+    @ServiceConfig(registryId = "elearn", url = "/elearn/createUserSchedule", channel = {SrvChannel.PC, SrvChannel.MOBILE})
     CommonRespDataDto createUserSchedule(StudyPlanDTO studyPlanDTO);
 
+    /**
+     * 根据用户id查询学习计划
+     * @param userid
+     * @return
+     */
+    @ServiceConfig(registryId = "elearn", url = "/elearn/queryStudyPlan", channel = {SrvChannel.PC, SrvChannel.MOBILE})
+    List<StudyPlanDTO> queryStudyPlan(String userid);
 
     /**
      * 根据用户的id、学习计划id、学习的天数、单词索引，查询之前创建的学习计划
@@ -57,6 +65,7 @@ public interface SpokenEnglish {
      * @param dailyWordsDto
      * @return
      */
+    @ServiceConfig(registryId = "elearn", url = "/elearn/startDailySchedule", channel = {SrvChannel.PC, SrvChannel.MOBILE})
     WordDTO startDailySchedule(DailyStudyDTO dailyWordsDto);
 
 

@@ -1,6 +1,7 @@
 package com.changjiang.elearn.api.dto;
 
 import lombok.Data;
+
 import javax.validation.constraints.Size;
 import java.util.Date;
 
@@ -27,6 +28,8 @@ public class StudyPlanDTO {
      * 总天数
      */
     private Integer totalDays;
+
+    private String templateModel;
     /**
      * 总单词数
      */
